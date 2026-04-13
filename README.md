@@ -1,126 +1,141 @@
-# Predicting Formula One (F1) Race Finishing Tiers Using Telemetry, Race Conditions, and Strategies
-**Using Multivariate Techniques**
+# Predicting F1 Race Finishing Tiers Using Telemetry, Race Conditions, and Strategies
+**Multivariate Statistical Analysis**
 
 **Project By:** Jelliane Co, Justin Dampal & Lorenzo Sulit
 
 ---
 
 ## Overview
-This project predicts a multi-class nonmetric dependent variable (Finishing Tier: Podium, Point Scorer, No Points) using multiple metric and nonmetric independent variables (telemetry, race conditions, and strategies). 
 
-The following sections detail the statistical proofs used to validate the model's structural integrity and predictive power.
-
----
-### Data Preparation
-
-The objective of the data preparation phase was to transform raw Formula 1 telemetry and results into a structured dataset capable of supporting multivariate statistical inference.
-
-### 1. Data Ingestion & Multi-Race Stacking
-We utilized the `FastF1` API to pull comprehensive race data from the **2023 Bahrain, Saudi Arabian, and Australian Grands Prix**. This multi-race approach ensured the model captured global physical relationships across different track types (permanent, street, and parkland circuits). The data was stacked into a unified dataframe containing every lap completed by every driver across all three events to maximize the sample size for analysis.
-
-### 2. Defining the Target Variable (Finishing Tier)
-The dependent variable, `Finishing_Tier`, was engineered as a multi-class non-metric variable. We mapped final race classifications into three distinct categories:
-* **Podium:** Positions 1 through 3.
-* **Point Scorer:** Positions 4 through 10.
-* **No Points:** Positions 11 and below.
-
-### 3. DNF (Did Not Finish) Protocol
-To maintain mathematical rigor, we implemented a strict DNF protocol. By merging official `session.results` with individual lap data, we identified drivers with a status of "Retired" or a classified position of "R". These drivers were programmatically reassigned to the **"No Points"** tier for all laps they completed, preventing the model from incorrectly attributing "Podium" telemetry signatures to drivers who failed to finish the race.
-
-### 4. Feature Engineering & Interaction Modeling
-Three primary metric predictors were engineered to represent the physics of race strategy:
-* **Fuel Mass Proxy:** Since exact fuel loads are proprietary, we engineered a linear burn-off proxy starting at 110kg and decreasing to 0kg based on the total laps completed in each specific race.
-* **Tire Age:** Extracted directly from `TyreLife` to track the physical degradation of the rubber compounds.
-* **Degradation x Fuel (Interaction):** We created a mean-centered interaction term by multiplying Tire Age and Fuel Mass. Mean-centering was applied to prevent structural multicollinearity, allowing for a clear interpretation of how the coupling of these two physical forces impacts finishing probability.
-
-### 5. Categorical Encoding (k-1 Dummies)
-To incorporate non-metric strategy choices (Tire Compounds) into a regression environment, we utilized **Dummy Variable Encoding**. Following the **k-1 rule**, we dropped the first alphabetical compound to serve as the baseline, creating binary indicators for `Tire_SOFT` and `Tire_MEDIUM`. This avoids the "Dummy Variable Trap" and allows for the calculation of the relative impact of strategy choices against a constant reference.
-
-### 6. Baseline Pace Anchoring
-Finally, we incorporated `GridPosition` for each driver. This serves as a critical control variable in the multivariate equation, allowing the model to isolate the driver's strategic telemetry execution from the car's baseline aerodynamic and engine capability.
-
-**Result:** The final processed dataset (`f1_clean_data.csv`) consists of 2,880 observations, providing a robust foundation for both Maximum Likelihood Estimation and Machine Learning validation.
+This project predicts a driver's finishing tier — Podium, Point Scorer, or No Points — using lap telemetry, race conditions, and strategy variables. The sections below walk through each statistical check used to validate the model's structure and predictive power.
 
 ---
+
+## Data Preparation
+
+### 1. Data ingestion & multi-race stacking
+
+We pulled race data from the **2023 Bahrain, Saudi Arabian, and Australian Grands Prix** using the `FastF1` API. Three races gave us coverage across meaningfully different track types — permanent, street, and parkland circuits — so the model isn't just learning one layout. Every lap from every driver across all three events was stacked into a single dataframe to give MLE enough observations to work with.
+
+### 2. Defining the target variable
+
+`Finishing_Tier` is a three-class non-metric variable mapped from final race classifications:
+
+- **Podium:** Positions 1–3
+- **Point Scorer:** Positions 4–10
+- **No Points:** Positions 11 and below
+
+### 3. DNF protocol
+
+Drivers who retired mid-race needed special handling. By merging `session.results` with lap data, we flagged any driver with a status of "Retired" or a classified position of "R" and reassigned all their completed laps to the **No Points** tier. Without this step, a driver running P2 pace before a mechanical failure would contaminate the Podium cluster with telemetry from someone who never finished.
+
+### 4. Feature engineering & interaction modeling
+
+Three metric predictors were built to represent the physics of race strategy:
+
+- **Fuel Mass Proxy:** Exact fuel loads are proprietary, so we engineered a linear burn-off proxy starting at 110 kg and decreasing to 0 kg based on total laps completed per race.
+- **Tire Age:** Pulled directly from `TyreLife` to capture rubber degradation over a stint.
+- **Degradation × Fuel (interaction term):** Tire Age multiplied by Fuel Mass, mean-centered before multiplication. Mean-centering prevents structural multicollinearity and lets us interpret the coefficient as the *combined* effect of both forces — not just their individual contributions.
+
+### 5. Categorical encoding (k-1 dummies)
+
+Tire compound choices are non-metric, so we used dummy variable encoding. Following the k-1 rule, we dropped the first alphabetical compound as the baseline and created binary indicators for `Tire_SOFT` and `Tire_MEDIUM`. This sidesteps the dummy variable trap and lets us read each coefficient as the compound's effect relative to a fixed reference.
+
+### 6. Baseline pace anchoring
+
+`GridPosition` was included as a control variable. Its job is to absorb the baseline aerodynamic and engine capability of the car, so the remaining coefficients can reflect what the *driver and strategy* contributed — not just which team they drove for.
+
+**Result:** The processed dataset (`f1_clean_data.csv`) has 2,880 observations across three circuits.
+
+---
+
 ## Statistical Checks & Theoretical Proofs
 
-### 1. Box's M Test
-* **Test:** Homogeneity of Covariance Matrices
-* **Chi-Sq (approx.):** 160.419
-* **Degrees of Freedom (df):** 20
-* **p-value:** < 2.2e-16
+### 1. Box's M test — homogeneity of covariance matrices
 
-**Methodological Justification & Number Explanation:** Box's M tests the assumption that the covariance matrices (the variance and relationships between variables) are equal across all three finishing tiers. The infinitesimally small p-value (< 2.2e-16) is significantly lower than the 0.05 threshold, formally rejecting the assumption of equal covariance. Because Multiple Discriminant Analysis (MDA) mathematically requires equal covariance to function properly, this empirical failure explicitly justifies our methodological choice to deploy **Multinomial Logistic Regression**, which does not require this strict assumption.
+| Statistic | Value |
+| :--- | :--- |
+| Chi-sq (approx.) | 160.419 |
+| Degrees of Freedom | 20 |
+| p-value | < 2.2e-16 |
 
-### 2. VIF Diagnostics (Variance Inflation Factor)
-*Checking for structural multicollinearity among predictors.*
+Box's M tests whether the covariance matrices are equal across all three finishing tiers. The p-value is effectively zero, which formally rejects that assumption. This matters for method selection: Multiple Discriminant Analysis requires equal covariance to work correctly, and this result disqualifies it. **Multinomial Logistic Regression** was chosen specifically because it doesn't carry that requirement.
+
+### 2. VIF diagnostics — multicollinearity check
 
 | Variable | VIF Score |
 | :--- | :--- |
-| **GridPosition** | 1.007456 |
-| **Tire_Age** | 3.219551 |
-| **Fuel_Mass_Proxy** | 2.314596 |
-| **Degradation_x_Fuel** | 1.724701 |
-| **Tire_MEDIUM** | 1.181336 |
-| **Tire_SOFT** | 1.155771 |
+| GridPosition | 1.007456 |
+| Tire_Age | 3.219551 |
+| Fuel_Mass_Proxy | 2.314596 |
+| Degradation_x_Fuel | 1.724701 |
+| Tire_MEDIUM | 1.181336 |
+| Tire_SOFT | 1.155771 |
 
-**Methodological Justification & Number Explanation:**
-Variance Inflation Factors measure how much the standard errors of the estimated coefficients are inflated due to collinearity. The standard methodological threshold for dangerous multicollinearity is a VIF $\ge 10$. Because all VIF values range between 1.00 and 3.21, the model is structurally bulletproof. Notably, the inclusion of `GridPosition` yielded a near-perfect VIF of 1.007, mathematically proving that a driver's starting pace operates completely independently of how their tires physically degrade over a stint. 
+VIF measures how much a predictor's standard error inflates because of its correlation with other predictors. The threshold for problematic multicollinearity is typically VIF ≥ 10. Everything here falls between 1.00 and 3.22, so the predictors are structurally independent. The near-perfect VIF of 1.007 for `GridPosition` is worth noting: it confirms that starting position and tire degradation are mathematically unrelated, which is exactly what we'd expect physically.
 
-### 3. Multinomial Logistic Regression (MLE)
-* **Residual Deviance:** 3821.657
-* **AIC:** 3849.657 
+### 3. Multinomial logistic regression (MLE)
 
-**Coefficients (Log-Odds):**
-| Tier | (Intercept) | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
+**Model fit:**
+- Residual Deviance: 3821.657
+- AIC: 3849.657
+
+**Coefficients (log-odds):**
+
+| Tier | Intercept | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Podium** | 4.856516 | -0.7977605 | 0.029083324 | -0.014936022 | 0.0008256694 | 0.2267218 | 0.2424192 |
-| **Point Scorer** | 2.922957 | -0.2270777 | -0.003556666 | -0.008448375 | 0.0002182545 | -0.4600896 | -0.2538360 |
+| Podium | 4.856516 | -0.7977605 | 0.029083324 | -0.014936022 | 0.0008256694 | 0.2267218 | 0.2424192 |
+| Point Scorer | 2.922957 | -0.2270777 | -0.003556666 | -0.008448375 | 0.0002182545 | -0.4600896 | -0.2538360 |
 
-**Standard Errors:**
-| Tier | (Intercept) | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
+**Standard errors:**
+
+| Tier | Intercept | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Podium** | 0.4205836 | 0.03466782 | 0.013625445 | 0.004508500 | 0.0003181667 | 0.2628297 | 0.2740445 |
-| **Point Scorer** | 0.2511281 | 0.01071908 | 0.007463093 | 0.002314867 | 0.0001769331 | 0.1376122 | 0.1317377 |
+| Podium | 0.4205836 | 0.03466782 | 0.013625445 | 0.004508500 | 0.0003181667 | 0.2628297 | 0.2740445 |
+| Point Scorer | 0.2511281 | 0.01071908 | 0.007463093 | 0.002314867 | 0.0001769331 | 0.1376122 | 0.1317377 |
 
-**Methodological Justification & Number Explanation:**
-Maximum Likelihood Estimation (MLE) iteratively calculates the mathematical weights that best map telemetry and pace inputs to race results. Using "No Points" as the baseline, the coefficients represent the change in the log-odds of a driver finishing in a specific tier. For example, the negative coefficient for `GridPosition` (-0.79) in the Podium tier perfectly aligns with the physical reality of motorsport: as the starting grid position number increases (moving further back), the log-odds of finishing on the podium severely decrease.
+MLE finds the coefficient weights that best map our telemetry inputs to race results. "No Points" is the baseline, so all coefficients reflect log-odds relative to that tier. The negative sign on `GridPosition` (-0.80 for Podium) reads exactly as expected: as the grid number goes up (further back on the grid), the log-odds of a podium finish drop sharply.
 
-### 4. Exact P-Values
-*Derived via Z-scores from the model summary to test the statistical significance of the predictors.*
+### 4. Exact p-values
 
-| Tier | (Intercept) | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
+| Tier | Intercept | GridPosition | Tire_Age | Fuel_Mass_Proxy | Degradation_x_Fuel | Tire_MEDIUM | Tire_SOFT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Podium** | 0.0000 | 0.0000 | 0.0328030 | 0.0009234781 | 0.00945677 | 0.3883470937 | 0.37637347 |
-| **Point Scorer** | 0.0000 | 0.0000 | 0.6336702 | 0.0002626338 | 0.21737349 | 0.0008276522 | 0.05400093 |
+| Podium | 0.0000 | 0.0000 | 0.0328 | 0.0009 | 0.0095 | 0.3883 | 0.3764 |
+| Point Scorer | 0.0000 | 0.0000 | 0.6337 | 0.0003 | 0.2174 | 0.0008 | 0.0540 |
 
-**Methodological Justification & Number Explanation:**
-* **Anchoring Baseline Pace (`GridPosition`):** With a p-value of 0.000 for both tiers, starting position is confirmed as an overwhelmingly significant predictor of race outcomes. It effectively acts as a mathematical anchor, isolating the baseline aerodynamic and engine capability of the car from the driver's telemetry execution.
-* **The Interaction Term (`Degradation_x_Fuel`):** By utilizing `GridPosition` to control for the baseline speed of the car, the interaction term achieves a highly significant p-value of **0.009** for the Podium tier. This formally and definitively proves ($\alpha < 0.01$) that the mathematical coupling of tire degradation and fuel burn-off is a distinct, highly significant predictor of podium finishes.
+Two results stand out:
+
+- **GridPosition (p = 0.000 for both tiers):** Starting position is overwhelmingly significant, confirming it's doing its job as a baseline control.
+- **Degradation_x_Fuel (p = 0.009 for the Podium tier):** With grid position controlling for raw car pace, the interaction term achieves significance at α < 0.01. The coupling of tire degradation and fuel burn is a distinct, measurable predictor of podium finishes — not just noise.
+
 ---
-### ML Validation
 
-## 🤖 Phase 4: Machine Learning Validation
+## Machine learning validation
 
-To test the practical predictive power of our statistical equations, we deployed a **Multinomial Logistic Regression** model utilizing **Leave-One-Group-Out Cross-Validation (LOGO-CV)** across the 3-race dataset.
+To test how well the statistical equation holds up on unseen data, we ran a **Multinomial Logistic Regression** with **Leave-One-Group-Out Cross-Validation (LOGO-CV)** across the three races.
 
-To ensure the algorithm evaluates strategic execution rather than just awarding predictions to raw car dominance, the model utilizes `GridPosition` as a control variable alongside the primary telemetry predictors. Furthermore, balanced class weights (`class_weight='balanced'`) were applied to prevent the algorithm from ignoring the minority class (Podiums) in favor of the heavily skewed majority class (No Points).
+`GridPosition` was kept in as a control variable, and `class_weight='balanced'` was applied to stop the model from defaulting to "No Points" predictions just because that class dominates the dataset.
 
-### Final Classification Report (LOGO-CV)
-* **Overall Accuracy:** 62.36%
+### Final classification report (LOGO-CV)
 
-| Tier | Precision | Recall | F1-Score | Support (Laps) |
+**Overall Accuracy: 62.36%**
+
+| Tier | Precision | Recall | F1-Score | Support (laps) |
 | :--- | :--- | :--- | :--- | :--- |
-| **No Points** | 0.74 | 0.67 | 0.70 | 1468 |
-| **Podium** | 0.57 | 0.89 | 0.69 | 429 |
-| **Point Scorer** | 0.49 | 0.45 | 0.47 | 983 |
+| No Points | 0.74 | 0.67 | 0.70 | 1468 |
+| Podium | 0.57 | 0.89 | 0.69 | 429 |
+| Point Scorer | 0.49 | 0.45 | 0.47 | 983 |
 
-### Interpretation of Results
-The structural equation demonstrates robust predictive power across completely unseen circuits, yielding the following insights:
+### What the numbers mean
 
-1. **High-Fidelity Podium Detection:** The model achieved an **0.89 Recall** for the Podium tier. This indicates that when anchored by Grid Position, the physical coupling of tire wear and fuel burn successfully identified 89% of all actual podium-finishing laps. This proves that top-tier finishing is strongly correlated with specific telemetry signatures.
-2. **Stable Precision:** The model achieved a Podium precision of 0.57. By mathematically controlling for starting pace, the algorithm effectively distinguishes between high-performance constructors and slower teams, ensuring that strategic predictions are grounded in the realistic physical capability of the car.
-3. **Midfield Identification:** The model successfully identified 45% of point-scoring laps (0.45 Recall). While the F1 midfield is often dictated by track-specific factors like DRS trains and traffic, the structural equation proved capable of isolating midfield strategy execution at a rate significantly higher than random chance.
+**Podium recall (0.89):** The model correctly identified 89% of all actual podium-finishing laps. Anchored by grid position, the tire wear and fuel coupling picks up top-tier performance signatures reliably across circuits it hasn't seen.
 
-### Conclusion
-This research mathematically proves that race outcomes in Formula 1 are not merely dictated by raw car pace. By strictly defining the physical relationship between compound choices, tire degradation, and dynamic fuel mass, we established a statistically bulletproof, highly predictive structural equation. Telemetry dictates the macro-strategy, starting position dictates the baseline capability, and their mathematical intersection accurately predicts the Formula 1 podium.
+**Podium precision (0.57):** When the model predicts a podium lap, it's right 57% of the time. The control for starting pace prevents the model from just predicting "Podium" for any fast car regardless of team — the predictions are grounded in what the car can physically do from that grid slot.
+
+**Midfield identification (0.45 recall):** The model caught 45% of point-scoring laps. The F1 midfield is genuinely harder to model — DRS trains, traffic, and track position create a lot of variance that telemetry alone can't fully explain. 45% is still well above chance for a three-class problem.
+
+---
+
+## Conclusion
+
+Race outcomes in F1 aren't purely a function of car pace. By modeling the physical relationship between compound selection, tire degradation, and fuel burn, the structural equation captures something real — and the LOGO-CV results confirm it generalizes beyond the training circuits. Grid position sets the baseline. Telemetry defines the strategic execution. Their mathematical intersection predicts who ends up on the podium.
