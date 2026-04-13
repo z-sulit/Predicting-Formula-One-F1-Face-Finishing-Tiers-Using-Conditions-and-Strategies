@@ -10,6 +10,24 @@
 This project predicts a driver's finishing tier   Podium, Point Scorer, or No Points   using lap telemetry, race conditions, and strategy variables. The sections below walk through each statistical check used to validate the model's structure and predictive power.
 
 ---
+## Methods
+### 1. Multivariate Statistical Methods
+These methods were deployed to identify the mathematical significance of race strategy variables and ensure the structural integrity of the model.
+
+* **Box's M Test:** Used to evaluate the assumption of **Homogeneity of Covariance Matrices**. By testing whether the variance-covariance structures were equal across finishing tiers, we mathematically justified the rejection of Multiple Discriminant Analysis (MDA) in favor of Multinomial Logistic Regression.
+* **Multinomial Logistic Regression (MLE):** The core inferential engine used to model the relationship between a multi-class non-metric dependent variable (`Finishing_Tier`) and a combination of metric and categorical predictors. This allowed for the calculation of **log-odds** for each tier relative to the baseline.
+* **Variance Inflation Factor (VIF):** A critical diagnostic for **Multicollinearity**. This ensured that engineered features (like the Interaction Term) and control variables (like Grid Position) remained statistically independent, preventing the inflation of standard errors.
+* **Z-Scores & P-Values:** Utilized for **Statistical Inference** to determine the individual significance of each predictor. This provided the empirical proof that the coupling of tire age and fuel mass is a significant driver of podium outcomes ($p < 0.01$).
+
+### 2. Machine Learning (ML) Methods
+These techniques were utilized to test the generalizability of the statistical equations when faced with entirely unseen race data.
+
+* **Leave-One-Group-Out Cross-Validation (LOGO-CV):** A robust validation strategy where the model is iteratively trained on $N-1$ races and tested on the remaining held-out race. This proved the model's ability to generalize its findings across different circuit architectures (e.g., training on Bahrain/Saudi Arabia and successfully predicting Australia).
+* **Balanced Class Weighting:** A technique used to mitigate **Class Imbalance**. Because "Podium" laps are rare compared to "No Points" laps, we applied weights to ensure the model prioritized correctly identifying the minority class rather than simply maximizing accuracy by guessing the majority.
+* **Classification Metrics (Precision & Recall):** Used to move beyond simple "Accuracy" to evaluate model fidelity. **Recall** was the primary metric for measuring the model’s sensitivity in detecting podium-tier performance, while **Precision** measured the reliability of those predictions.
+
+
+---
 
 ## Data Preparation
 
