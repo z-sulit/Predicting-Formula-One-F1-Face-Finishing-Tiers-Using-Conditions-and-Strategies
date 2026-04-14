@@ -1,0 +1,93 @@
+% ============================================================
+% Chapter V — Summary, Conclusions, and Recommendations
+% ============================================================
+\section{Summary, Conclusions, and Recommendations}
+
+\subsection{Summary}
+
+This study predicted Formula One race finishing tiers (Podium, Point Scorer,
+No Points) using within-race telemetry data from the 2023 Bahrain, Saudi
+Arabian, and Australian Grands Prix. A dataset of 2,880 lap-level
+observations was constructed from FastF1 telemetry, with features engineered
+to represent the physical dynamics of race strategy: tire age, a linear fuel
+burn-off proxy, their mean-centered interaction term, and tire compound
+dummies, with grid position as a baseline control.
+
+Box's M test rejected the homogeneity of covariance matrices assumption
+($p < 2.2 \times 10^{-16}$), ruling out discriminant analysis and
+motivating multinomial logistic regression as the primary inferential model.
+VIF diagnostics confirmed the absence of problematic multicollinearity (all
+VIF $< 3.5$). The MLE model identified GridPosition ($p = 0.000$) and the
+Degradation $\times$ Fuel interaction term ($p = 0.0095$ for Podium) as
+statistically significant predictors. Leave-one-group-out cross-validation
+across the three races yielded 62.36\% overall accuracy, with podium recall
+reaching 89\%.
+
+\subsection{Conclusions}
+
+Based on the findings, the following conclusions are drawn:
+
+\begin{enumerate}
+  \item \textbf{The null hypothesis is rejected.} At least one predictor---the
+    Degradation $\times$ Fuel interaction term---has a statistically
+    significant effect on the log-odds of finishing in the Podium tier
+    ($p = 0.0095 < \alpha = 0.05$), after controlling for grid position.
+
+  \item \textbf{Grid position is the dominant predictor.} Starting position
+    is overwhelmingly significant for both the Podium ($p = 0.000$) and
+    Point Scorer ($p = 0.000$) tiers, confirming that qualifying performance
+    sets the baseline for race outcomes.
+
+  \item \textbf{The tire--fuel interaction captures a distinct physical
+    effect.} The significance of the Degradation $\times$ Fuel term for the
+    Podium tier, even after grid position absorbs baseline car pace,
+    demonstrates that the coupling of tire degradation and fuel burn-off is
+    a measurable predictor of top-tier finishes---not merely noise.
+
+  \item \textbf{The model generalizes across circuit types.} The LOGO-CV
+    results, where the model was trained on two races and tested on a
+    third, confirm that the statistical relationships hold across permanent,
+    street, and parkland circuits.
+
+  \item \textbf{Mid-field prediction remains challenging.} The lower recall
+    for the Point Scorer tier (0.45) reflects genuine variance in mid-field
+    racing that telemetry features alone cannot capture---DRS trains,
+    undercut strategies, safety car timing, and team orders all introduce
+    noise that is not represented in the current feature set.
+\end{enumerate}
+
+\subsection{Recommendations}
+
+\begin{enumerate}
+  \item \textbf{Expand the race calendar.} Including all 23 races from a
+    full F1 season would provide greater variance in weather conditions,
+    circuit types, and team performance trajectories, strengthening both the
+    statistical power and the generalizability of the model.
+
+  \item \textbf{Incorporate weather variables.} Rain probability, track
+    temperature, and ambient temperature directly affect tire degradation
+    rates and compound selection. Including these would capture a significant
+    source of within-race variance.
+
+  \item \textbf{Model DRS and traffic effects.} Lap time delta to the car
+    ahead, DRS activation history, and pit stop timing would help explain
+    mid-field variance and improve Point Scorer tier predictions.
+
+  \item \textbf{Explore non-linear tire degradation.} The current model
+    treats tire age as a linear predictor, but degradation curves are known
+    to be exponential after a ``cliff'' threshold. A piecewise or
+    polynomial tire age term may better capture late-stint performance
+    drops.
+
+  \item \textbf{Compare with alternative classifiers.} Random forests,
+    gradient-boosted trees, or ordinal logistic regression could be
+    benchmarked against the multinomial logistic regression baseline to
+    determine whether more flexible models improve classification
+    performance.
+
+  \item \textbf{Apply to other racing series.} The feature engineering
+    framework---fuel proxy, tire degradation, interaction terms, grid
+    position control---is transferable to any series with telemetry data
+    (Formula 2, IndyCar, WEC) and could be validated as a general
+    motorsport prediction methodology.
+\end{enumerate}
