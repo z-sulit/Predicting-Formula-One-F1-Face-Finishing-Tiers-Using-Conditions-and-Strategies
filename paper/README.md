@@ -49,8 +49,7 @@ Open `main.tex`, find `[Instructor Name]` on the title page, replace with your p
 ### [ ] Verify references
 The `references.bib` file has 20 entries. Some are real textbooks (Agresti, Hosmer, Tabachnick, Hair, Field). The F1 analytics papers and Philippine studies are structurally correct but may need to be swapped with actual sources you and your groupmates found. Check each one.
 
-### [ ] Add real figures if needed
-The 6 figures in `figures/` are auto-generated from the data. If your prof wants additional diagrams (conceptual framework diagram, process flow, etc.), drop PNGs into `figures/` and add `\begin{figure}...\end{figure}` blocks in the appropriate chapter.
+
 
 ### [ ] Proofread
 Read through all chapters for flow and consistency. Check that the Definition of Terms matches what your prof expects.
