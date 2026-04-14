@@ -3,54 +3,222 @@
 % ============================================================
 \section{Methodology}
 
-\subsection{Research Approach}
+This chapter outlines the six-stage methodological framework used to
+develop, validate, and interpret the multivariate predictive model. The
+framework follows Hair et al.'s\parencite{hair2019} guidelines for
+dependence multivariate techniques, adapted for the specific characteristics
+of Formula One telemetry data.
 
-This study employs a quantitative, cross-sectional research design using
-multivariate statistical methods. The approach is predictive and
-confirmatory: features are engineered from within-race telemetry data, the
-statistical model is fitted using maximum likelihood estimation (MLE), and
-generalizability is assessed through leave-one-group-out cross-validation
-(LOGO-CV). The research follows a sequential analytical pipeline---data
-ingestion, feature engineering, assumption testing, inferential modeling,
-and machine learning validation.
+\subsection{Stage 1: Define the Research Problem and Technique Selection}
 
-\subsection{Design of the Study}
+The objective is to predict a single multi-class non-metric dependent variable
+--- \textbf{Finishing Tier} (Podium, Point Scorer, No Points) --- using
+multiple metric and non-metric independent variables derived from lap-level
+telemetry, race conditions, and strategy decisions.
 
-The study uses a \textbf{multinomial logistic regression} framework with a
-three-class ordinal response variable (Finishing Tier: Podium, Point Scorer,
-No Points). The design involves:
+Two dependence techniques were considered:
+
+\begin{description}
+  \item[Multiple Discriminant Analysis (MDA)] The theoretical baseline for
+    multi-group classification. MDA would estimate canonical discriminant
+    functions to maximize between-group variance. However, MDA requires
+    homogeneity of covariance matrices and multivariate normality ---
+    assumptions that are routinely violated in motorsport data due to the
+    skewed nature of track evolution and safety car deployments.
+
+  \item[Multinomial Logistic Regression] The definitive technique selected
+    for this study. Using Maximum Likelihood Estimation (MLE), it calculates
+    the specific log-odds of a driver landing in each tier relative to a
+    baseline category. It offers greater operational value for risk
+    assessment than MDA's rigid classification boundaries and makes no
+    assumption about covariance structure.
+\end{description}
+
+MDA serves as the benchmark against which the Multinomial Logistic Regression
+is compared, but the latter is the primary inferential engine.
+
+\subsection{Stage 2: Develop the Analysis Plan (Research Design)}
+
+The research design encompasses the analytical decisions made before model
+estimation.
+
+\subsubsection{Categorical Encoding}
+
+Qualitative race strategy variables (tire compounds: Soft, Medium, Hard,
+Intermediate, Wet) are non-metric and cannot enter a regression equation
+directly. They were converted into $k{-}1$ dummy variables, where $k$ is the
+number of compound categories. The first alphabetical compound (Hard) was
+dropped as the baseline reference, yielding binary indicators for
+\texttt{Tire\_SOFT} and \texttt{Tire\_MEDIUM}. This avoids the dummy variable
+trap while assigning specific mathematical weights to each compound relative
+to the reference.
+
+\subsubsection{Sample Size}
+
+The processed dataset contains 2,880 lap-level observations across 6
+independent variables. This yields 480 observations per predictor --- well
+above the recommended minimum of 15 to 20 observations per independent
+variable for reliable multivariate estimation\parencite{hair2019}.
+
+\subsubsection{Structural Break Classification (The DNF Protocol)}
+
+Drivers who retired mid-race (crashes, mechanical failures) represent a
+\textit{structural break} --- not a standard missing data point to be
+imputed or dropped. A DNF lap carries telemetry from a driver who may have
+been running P2 pace before a suspension failure, but whose final
+classification is ``Retired.'' Including these laps in the Podium cluster
+would contaminate the tier with telemetry from a driver who never finished.
+
+The protocol was:
+\begin{enumerate}
+  \item Flag all drivers with \texttt{Status = "Retired"} or
+    \texttt{ClassifiedPosition = "R"}.
+  \item Reassign \textit{all} their completed laps to the ``No Points'' tier.
+  \item This preserves the integrity of lap-time telemetry by ensuring that
+    only drivers who actually finished in a given tier contribute to that
+    tier's covariance structure.
+\end{enumerate}
+
+\subsection{Stage 3: Evaluate the Assumptions Underlying the Techniques}
+
+\subsubsection{The Methodological Pivot: Covariance Diagnostics}
+
+Box's M test was conducted to assess the equality of covariance matrices
+across the three finishing tiers. The test yielded
+$\chi^{2}(20) = 160.419$, $p < .001$, formally rejecting the null
+hypothesis of equal covariance structures.
+
+This empirical failure --- driven by the heavily skewed distribution of
+Podium laps (14.9\%) versus No Points laps (51.0\%), combined with the
+heterogeneous variance introduced by track evolution and safety car
+deployments --- formally justifies abandoning MDA as the primary technique.
+Multinomial Logistic Regression was selected specifically because it
+bypasses this rigid normality requirement.
+
+\subsubsection{Coupled Variables and Dynamic Interaction Terms}
+
+Tire degradation and fuel mass burn-off are physically coupled variables:
+both increase monotonically with lap number. Initial VIF diagnostics
+confirmed multicollinearity risk between these variables and their product
+term. Following Hair et al.'s\parencite{hair2019} recommendation, the
+variables were \textit{not} dropped. Instead, a dynamic interaction term
+was constructed:
+
+\[
+  \text{Degradation} \times \text{Fuel} =
+  (\text{Tire Age} - \bar{x}_{\text{Tire Age}}) \times
+  (\text{Fuel Mass} - \bar{x}_{\text{Fuel Mass}})
+\]
+
+Mean-centering before multiplication eliminates structural
+multicollinearity while preserving the interaction's ability to capture
+how these forces compound each other over the course of a stint. Post-
+interaction VIF scores confirmed that all predictors remained below the
+threshold of 10.
+
+\subsection{Stage 4: Estimate the Multivariate Model and Assess Overall Fit}
+
+\subsubsection{Model Estimation}
+
+The Multinomial Logistic Regression was estimated via Maximum Likelihood
+Estimation (MLE) using the \texttt{multinom()} function in R's
+\texttt{nnet} package. The model computes simultaneous log-odds equations
+for the Podium and Point Scorer tiers relative to the No Points baseline:
+
+\[
+  \ln\!\left(\frac{P(Y = k)}{P(Y = \text{No Points})}\right) =
+  \beta_{0k} + \beta_{1k} \cdot \text{Grid} +
+  \beta_{2k} \cdot \text{TireAge} +
+  \beta_{3k} \cdot \text{Fuel} +
+  \beta_{4k} \cdot \text{Deg}\times\text{Fuel} +
+  \beta_{5k} \cdot \text{Tire\_MED} +
+  \beta_{6k} \cdot \text{Tire\_SOFT}
+\]
+
+where $k \in \{\text{Podium}, \text{Point Scorer}\}$.
+
+\subsubsection{Model Fit Assessment}
+
+Overall fit was evaluated using pseudo-$R^2$ equivalents (McFadden's
+$R^2$) derived from the residual deviance and AIC. The classification hit
+ratio was computed to confirm that the model places drivers into their
+actual finishing tiers at a rate significantly higher than proportional
+chance (33.3\% for a three-class problem with equal priors, or 51.0\% for
+a majority-class baseline).
+
+\subsection{Stage 5: Interpret the Variate(s)}
+
+\subsubsection{Identify Key Drivers}
+
+The MLE coefficients (log-odds) were converted to odds ratios
+($e^{\beta}$) to isolate which telemetry metrics and strategies exert the
+strongest influence on podium versus no-points outcomes. The sign and
+magnitude of each coefficient indicate whether a predictor increases or
+decreases the probability of a given tier.
+
+\subsubsection{VIF Validation Rule}
+
+Before interpreting any coefficient, VIF scores were verified to be below
+10 to ensure that standard error inflation was controlled. This prevents
+sign reversals --- a well-documented artifact of multicollinearity where a
+beneficial race strategy could mathematically appear harmful in the
+coefficient estimate\parencite{tabachnick2019}. Coefficients were compared
+on their raw (unstandardized) scale since all metric predictors are
+already on comparable physical units (laps, kilograms).
+
+\subsection{Stage 6: Validate the Multivariate Model}
+
+\subsubsection{Generalizability via Leave-One-Group-Out Cross-Validation}
+
+To prove the model's predictive power outside the training sample,
+Leave-One-Group-Out Cross-Validation (LOGO-CV) was deployed using
+\texttt{Race\_ID} as the grouping parameter. In each iteration:
 
 \begin{enumerate}
-  \item \textbf{Assumption testing} via Box's M test to determine the
-    appropriate multivariate method.
-  \item \textbf{Multicollinearity diagnostics} via VIF to validate feature
-    independence.
-  \item \textbf{Inferential modeling} via MLE to estimate log-odds
-    coefficients.
-  \item \textbf{Predictive validation} via LOGO-CV to assess generalizability.
+  \item The model was trained on $N{-}1$ Grand Prix events.
+  \item The held-out race's laps were predicted without ever having been
+    seen during training.
+  \item Predictions were aggregated across all three folds to produce an
+    overall classification report (precision, recall, F1-score, accuracy).
 \end{enumerate}
+
+To prevent intra-race data leakage, the interaction term was mean-centered
+within each training fold (not on the full dataset) before application to
+the test fold. This ensures the model cannot exploit statistical artifacts
+that only exist when all races are combined.
+
+A limitation of this validation is that non-randomized structural changes
+--- such as year-to-year FIA regulation shifts, tire compound formula
+changes, or major aerodynamic overhauls --- are not captured. The model
+generalizes across \textit{circuit architecture} but not across
+\textit{regulatory eras}.
+
+\subsubsection{Implementation Architecture}
+
+The analytical pipeline was executed across two environments:
+
+\begin{itemize}
+  \item \textbf{Python (pandas, scikit-learn):} Data wrangling, dummy
+    encoding, interaction term generation, and LOGO-CV validation loops.
+    The \texttt{LogisticRegression} class with \texttt{class\_weight=
+    "balanced"} was used for cross-validation.
+  \item \textbf{R (\texttt{nnet}, \texttt{car}, \texttt{heplots}):}
+    Theoretical proof via \texttt{multinom()} for rigorous coefficient
+    summaries, exact $p$-values, Box's M test, and VIF diagnostics.
+\end{itemize}
 
 \subsection{Sampling Strategy}
 
-The unit of analysis is the \textbf{individual lap}. Every lap from every
-driver across three selected races was included, yielding 2,880 observations
-after data cleaning. No random sampling was performed; the dataset represents
-the complete population of completed laps from the three selected races.
-Races were chosen purposively to cover three architecturally distinct circuit
-types:
-
-\begin{enumerate}
-  \item \textbf{Bahrain Grand Prix} (Sakhir) --- permanent desert circuit
-    with high tire degradation.
-  \item \textbf{Saudi Arabian Grand Prix} (Jeddah) --- high-speed street
-    circuit with minimal run-off.
-  \item \textbf{Australian Grand Prix} (Albert Park) --- parkland circuit
-    with mixed corner profiles.
-\end{enumerate}
+The unit of analysis is the individual lap. Every completed lap from every
+driver across the 2023 Bahrain, Saudi Arabian, and Australian Grands Prix
+was included, yielding 2,880 observations after DNF reassignment and
+missing-value removal. No random sampling was performed; the dataset
+represents the complete population of laps from the three selected races.
+Races were chosen purposively to cover three architecturally distinct
+circuit types: permanent (Bahrain), street (Jeddah), and parkland (Albert
+Park).
 
 \subsection{Tools and Instruments}
-
-The following tools and libraries were used:
 
 \begin{table}[htbp]
   \centering
@@ -62,10 +230,10 @@ The following tools and libraries were used:
     \midrule
     Python & 3.11 & Data preparation and ML validation \\
     FastF1 & 3.8.2 & F1 telemetry data extraction \\
-    pandas & 2.3.3 & Data manipulation \\
+    pandas & 2.3.3 & Data manipulation and encoding \\
     scikit-learn & 1.8.0 & Logistic regression, LOGO-CV \\
-    R & 4.x & Statistical inference (Box's M, MLE) \\
-    nnet (R) & --- & Multinomial logistic regression \\
+    R & 4.x & Statistical inference \\
+    nnet (R) & --- & \texttt{multinom()} for MLE estimation \\
     car (R) & --- & VIF diagnostics \\
     heplots (R) & --- & Box's M test \\
     \bottomrule
@@ -74,79 +242,50 @@ The following tools and libraries were used:
 
 \subsection{Data Collection Process}
 
-Data collection proceeded in five stages:
+Data were obtained from the FastF1 Python API, which interfaces with the
+official Formula One timing and telemetry data feed. For each race:
 
-\begin{enumerate}[label=Phase \arabic*:, leftmargin=*]
-  \item \textbf{Session Loading.} Each race session was loaded via
-    \texttt{fastf1.get\_session()} with telemetry, lap, and weather data
-    enabled. The FastF1 cache system stored downloaded data locally.
-
-  \item \textbf{Multi-Race Stacking.} All laps from the three sessions were
-    concatenated into a single dataframe. Each observation was tagged with a
-    \texttt{Race\_ID} (e.g., \texttt{2023\_Bahrain}) for group-aware
-    cross-validation.
-
-  \item \textbf{Target Variable Definition.} The \texttt{Finishing\_Tier}
-    variable was mapped from \texttt{Position}:
-    \begin{itemize}
-      \item \textbf{Podium:} Position $\leq 3$
-      \item \textbf{Point Scorer:} $4 \leq$ Position $\leq 10$
-      \item \textbf{No Points:} Position $> 10$
-    \end{itemize}
-
-  \item \textbf{DNF Protocol.} Drivers with \texttt{Status = "Retired"} or
-    \texttt{ClassifiedPosition = "R"} were flagged, and all their completed
-    laps were reassigned to the ``No Points'' tier. This prevents a driver
-    running P2 pace before a mechanical failure from contaminating the Podium
-    cluster.
-
-  \item \textbf{Feature Engineering.} Three metric predictors were constructed:
-    \begin{itemize}
-      \item \textit{Fuel Mass Proxy:} Linear burn-off from 110\,kg to 0\,kg:
-        \[
-          \text{Fuel Mass Proxy} = 110 - \frac{110}{\text{Max Lap}} \times
-          \text{Lap Number}
-        \]
-      \item \textit{Tire Age:} Directly sourced from \texttt{TyreLife}.
-      \item \textit{Degradation $\times$ Fuel:} Mean-centered interaction:
-        \[
-          \text{Deg} \times \text{Fuel} =
-          (\text{Tire Age} - \bar{x}_{\text{Tire Age}}) \times
-          (\text{Fuel Mass} - \bar{x}_{\text{Fuel Mass}})
-        \]
-      \item \textit{Tire Compound Dummies:} $k{-}1$ dummy coding with the
-        first alphabetical compound (Hard) as baseline.
-    \end{itemize}
+\begin{enumerate}
+  \item The race session was loaded via \texttt{fastf1.get\_session()} with
+    telemetry, lap, and weather data enabled.
+  \item All laps were concatenated into a single dataframe and tagged with a
+    \texttt{Race\_ID} for group-aware cross-validation.
+  \item The \texttt{Finishing\_Tier} target was mapped from final race
+    classification positions.
+  \item DNF drivers were flagged and their laps reassigned to ``No Points.''
+  \item Engineered features (fuel mass proxy, tire age, interaction term)
+    were computed and dummy-encoded.
 \end{enumerate}
+
+The final dataset was exported as \texttt{f1\_clean\_data.csv} with 2,880
+rows and 10 variables.
 
 \subsection{Ethics and Compliance}
 
 This study uses publicly available telemetry data from the FastF1 API, which
-interfaces with the official Formula One data feed. No human participants were
-involved, and no personally identifiable information was collected. Driver
-identifiers (e.g., ``VER'' for Max Verstappen) are public knowledge and used
-solely for data grouping. The study complies with FastF1's terms of use for
-academic research.
+interfaces with the official Formula One data feed. No human participants
+were involved, and no personally identifiable information beyond public
+driver abbreviations (e.g., ``VER'' for Max Verstappen) was collected. The
+study complies with FastF1's terms of use for academic research.
 
 \subsection{Ensuring Credibility}
 
-Several measures were taken to ensure the credibility and reproducibility of
-the analysis:
-
 \begin{itemize}
-  \item \textbf{Data transparency:} The full dataset (\texttt{f1\_clean\_data.csv})
-    and all source code (Jupyter notebooks, R scripts) are available in the
+  \item \textbf{Data transparency:} The full dataset and all source code
+    (Jupyter notebooks, R scripts, figure generation) are available in the
     project repository for independent verification.
-  \item \textbf{Assumption testing:} Box's M test and VIF diagnostics were
-    conducted before model fitting, and results are reported regardless of
-    outcome.
-  \item \textbf{Strict validation:} LOGO-CV was chosen over random train-test
-    splits to prevent data leakage and produce honest out-of-sample performance
-    estimates.
-  \item \textbf{Balanced evaluation:} Class weighting was applied during
-    validation, and performance is reported via precision, recall, and F1-score
-   ---not just accuracy---to prevent misleading claims on imbalanced data.
-  \item \textbf{Reproducibility:} The complete analytical pipeline---from raw
-    data ingestion through statistical testing to ML validation---is documented
-    in executable notebooks with fixed random seeds where applicable.
+  \item \textbf{Assumption testing before estimation:} Box's M test and VIF
+    diagnostics were conducted and reported regardless of outcome, following
+    the sequential framework.
+  \item \textbf{Strict validation design:} LOGO-CV was chosen over random
+    train-test splits to prevent data leakage and produce honest out-of-sample
+    performance estimates. Interaction terms were re-centered within each
+    training fold.
+  \item \textbf{Balanced evaluation metrics:} Class weighting was applied
+    during validation, and performance is reported via precision, recall,
+    and F1-score --- not just accuracy --- to prevent misleading claims on
+    imbalanced data.
+  \item \textbf{Dual-environment cross-verification:} Statistical inference
+    (R) and predictive validation (Python) were executed independently, and
+    results were cross-verified to ensure consistency across implementations.
 \end{itemize}
