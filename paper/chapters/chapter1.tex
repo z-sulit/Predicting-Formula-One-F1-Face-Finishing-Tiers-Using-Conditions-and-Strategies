@@ -3,7 +3,7 @@
 % ============================================================
 \section{Introduction}
 
-\subsection{Background of the Study}
+\subsection{Study Background}
 
 Formula One (F1) represents the pinnacle of motorsport engineering and strategy.
 Each Grand Prix weekend produces terabytes of telemetry data---lap times, tire
@@ -31,37 +31,37 @@ reduces noise from unpredictable events---safety cars, first-lap incidents,
 mechanical failures---while preserving the strategic information that
 determines race outcomes.
 
-\subsection{Conceptual Framework}
+\subsection{Problem Statement}
 
-The study is grounded in the premise that a driver's finishing tier can be
-modeled as a function of three categories of predictors:
+Formula One race outcomes are influenced by a complex interplay of physical
+and strategic variables that operate simultaneously during a Grand Prix.
+Traditional prediction models rely on aggregate season statistics or
+domain-expert judgment, failing to capture the within-race telemetry
+dynamics---tire degradation, fuel burn-off, and their interaction---that
+physically determine whether a driver finishes on the podium, scores points,
+or leaves empty-handed. The absence of a model that explicitly captures these
+combined forces limits both analytical understanding and practical
+predictability of race results.
 
-\begin{enumerate}[label=(\arabic*)]
-  \item \textbf{Baseline Pace Control} --- Grid Position captures the
-    intrinsic car--driver combination's qualifying performance, absorbing
-    the aerodynamic and engine capability differential between teams.
-  \item \textbf{Tire Strategy} --- Tire Age (degradation) and Compound
-    (Soft, Medium, Hard) represent the strategic choice of rubber and its
-    wear trajectory over a stint.
-  \item \textbf{Physical Interaction} --- Fuel Mass Proxy (linear burn-off
-    from 110\,kg to 0\,kg) and the interaction term Degradation $\times$
-    Fuel capture the combined effect of decreasing car mass and increasing
-    tire wear---two forces that compound over a race distance.
-\end{enumerate}
-
-\noindent
-The interaction term is mean-centered prior to multiplication to prevent
-structural multicollinearity, allowing the coefficient to be interpreted as
-the \textit{combined} effect of both forces rather than their individual
-contributions.
-
-\subsection{Statement of the Problem}
+\subsection{Research Purpose}
 
 This study aims to determine whether within-race telemetry variables---tire
 degradation, fuel burn-off, their interaction, and tire compound
 selection---can statistically predict a driver's finishing tier when
-controlling for baseline grid position. Specifically, it seeks to answer:
+controlling for baseline grid position. The research develops a multinomial
+logistic regression model grounded in physically meaningful features and
+validates its generalizability across different circuit architectures.
 
+\subsection{Goals and Research Questions}
+
+\textbf{Goals:}
+\begin{enumerate}
+  \item Engineer physically interpretable features from F1 telemetry data.
+  \item Fit a multinomial logistic regression model to predict finishing tier.
+  \item Validate the model's generalizability across unseen circuits.
+\end{enumerate}
+
+\textbf{Research Questions:}
 \begin{enumerate}
   \item Is there a statistically significant relationship between the
     engineered predictors and the probability of finishing in the Podium or
@@ -73,26 +73,13 @@ controlling for baseline grid position. Specifically, it seeks to answer:
     cross-validation?
 \end{enumerate}
 
-\subsection{Hypotheses}
-
-\begin{description}
-  \item[$H_{0}$:] Tire degradation, fuel mass proxy, their interaction term,
-    and tire compound selection have no statistically significant effect on
-    the log-odds of a driver finishing in the Podium or Point Scorer tier,
-    after controlling for grid position.
-  \item[$H_{1}$:] At least one of the predictors---specifically the
-    Degradation $\times$ Fuel interaction term---has a statistically
-    significant effect on the log-odds of finishing in the Podium or Point
-    Scorer tier ($p < 0.05$).
-\end{description}
-
-\subsection{Scope and Limitations}
+\subsection{Study Scope}
 
 This study uses lap-level telemetry data from the 2023 Bahrain, Saudi Arabian,
 and Australian Grands Prix---covering permanent, street, and parkland circuit
 types. The dataset comprises 2,880 observations after cleaning.
 
-\textbf{Scope:}
+\textbf{Inclusions:}
 \begin{itemize}
   \item The target variable is a three-class ordinal category (Podium, Point
     Scorer, No Points).
@@ -102,7 +89,7 @@ types. The dataset comprises 2,880 observations after cleaning.
     validated via LOGO-CV.
 \end{itemize}
 
-\textbf{Limitations:}
+\textbf{Exclusions:}
 \begin{itemize}
   \item The fuel mass proxy is an engineered linear approximation; actual fuel
     loads are proprietary and vary by team strategy.
@@ -113,7 +100,7 @@ types. The dataset comprises 2,880 observations after cleaning.
     explicitly modeled and contribute to residual variance in the mid-field.
 \end{itemize}
 
-\subsection{Significance of the Study}
+\subsection{Research Significance}
 
 This research contributes to the intersection of sports analytics and
 multivariate statistical modeling by demonstrating that physically meaningful

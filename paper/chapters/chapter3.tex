@@ -3,75 +3,87 @@
 % ============================================================
 \section{Methodology}
 
-\subsection{Research Design}
+\subsection{Research Approach}
 
 This study employs a quantitative, cross-sectional research design using
-multivariate statistical methods. The primary inferential tool is
-\textbf{multinomial logistic regression} estimated via maximum likelihood
-(MLE), with \textbf{leave-one-group-out cross-validation} (LOGO-CV) serving
-as the machine learning validation framework. The research follows a
-predictive modeling approach: features are engineered from within-race
-telemetry data, the statistical model is fitted using MLE, and
-generalizability is assessed through cross-validation across circuits.
+multivariate statistical methods. The approach is predictive and
+confirmatory: features are engineered from within-race telemetry data, the
+statistical model is fitted using maximum likelihood estimation (MLE), and
+generalizability is assessed through leave-one-group-out cross-validation
+(LOGO-CV). The research follows a sequential analytical pipeline---data
+ingestion, feature engineering, assumption testing, inferential modeling,
+and machine learning validation.
 
-\subsection{Data Source}
+\subsection{Design of the Study}
 
-All data were obtained from the \textbf{FastF1} Python API, which provides
-programmatic access to official F1 timing, telemetry, and session data. Three
-races from the 2023 Formula One World Championship were selected:
+The study uses a \textbf{multinomial logistic regression} framework with a
+three-class ordinal response variable (Finishing Tier: Podium, Point Scorer,
+No Points). The design involves:
 
 \begin{enumerate}
-  \item \textbf{Bahrain Grand Prix} (Sakhir International Circuit) ---
-    permanent desert circuit with high tire degradation.
-  \item \textbf{Saudi Arabian Grand Prix} (Jeddah Corniche Circuit) ---
-    high-speed street circuit with minimal run-off.
-  \item \textbf{Australian Grand Prix} (Albert Park Circuit) ---
-    parkland circuit with mixed slow-speed and medium-speed corners.
+  \item \textbf{Assumption testing} via Box's M test to determine the
+    appropriate multivariate method.
+  \item \textbf{Multicollinearity diagnostics} via VIF to validate feature
+    independence.
+  \item \textbf{Inferential modeling} via MLE to estimate log-odds
+    coefficients.
+  \item \textbf{Predictive validation} via LOGO-CV to assess generalizability.
 \end{enumerate}
 
-These three circuits were chosen to provide architectural diversity:
-permanent, street, and parkland layouts ensure that the model encounters
-meaningfully different track characteristics rather than memorizing a single
-circuit profile.
-
-\subsection{Participants and Sampling}
+\subsection{Sampling Strategy}
 
 The unit of analysis is the \textbf{individual lap}. Every lap from every
-driver across all three events was included in the dataset, yielding a total
-of \textbf{2,880 observations} after data cleaning. No sampling was performed;
-the dataset represents the complete population of completed laps from the three
-selected races.
+driver across three selected races was included, yielding 2,880 observations
+after data cleaning. No random sampling was performed; the dataset represents
+the complete population of completed laps from the three selected races.
+Races were chosen purposively to cover three architecturally distinct circuit
+types:
 
-\subsection{Instrumentation}
+\begin{enumerate}
+  \item \textbf{Bahrain Grand Prix} (Sakhir) --- permanent desert circuit
+    with high tire degradation.
+  \item \textbf{Saudi Arabian Grand Prix} (Jeddah) --- high-speed street
+    circuit with minimal run-off.
+  \item \textbf{Australian Grand Prix} (Albert Park) --- parkland circuit
+    with mixed corner profiles.
+\end{enumerate}
 
-The sole data collection instrument is the FastF1 Python library (v3.8.2),
-which interfaces with the official F1 data feed. The following data fields
-were extracted:
+\subsection{Tools and Instruments}
 
-\begin{itemize}
-  \item \texttt{LapTime}, \texttt{LapNumber} --- lap timing
-  \item \texttt{TyreLife} --- cumulative laps on current tire set (tire age)
-  \item \texttt{Compound} --- tire compound (Soft, Medium, Hard)
-  \item \texttt{Position} --- running position at lap completion
-  \item \texttt{GridPosition} --- starting grid position
-  \item \texttt{Driver} --- driver abbreviation
-  \item \texttt{Status} --- finishing status (Finished, Retired, etc.)
-  \item \texttt{ClassifiedPosition} --- official race classification
-\end{itemize}
+The following tools and libraries were used:
 
-\subsection{Data Collection Procedure}
+\begin{table}[htbp]
+  \centering
+  \caption{Software and Libraries}
+  \label{tab:tools}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Tool} & \textbf{Version} & \textbf{Purpose} \\
+    \midrule
+    Python & 3.11 & Data preparation and ML validation \\
+    FastF1 & 3.8.2 & F1 telemetry data extraction \\
+    pandas & 2.3.3 & Data manipulation \\
+    scikit-learn & 1.8.0 & Logistic regression, LOGO-CV \\
+    R & 4.x & Statistical inference (Box's M, MLE) \\
+    nnet (R) & --- & Multinomial logistic regression \\
+    car (R) & --- & VIF diagnostics \\
+    heplots (R) & --- & Box's M test \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Data Collection Process}
 
 Data collection proceeded in five stages:
 
 \begin{enumerate}[label=Phase \arabic*:, leftmargin=*]
   \item \textbf{Session Loading.} Each race session was loaded via
     \texttt{fastf1.get\_session()} with telemetry, lap, and weather data
-    enabled. The FastF1 cache system was used to store downloaded data
-    locally.
+    enabled. The FastF1 cache system stored downloaded data locally.
 
   \item \textbf{Multi-Race Stacking.} All laps from the three sessions were
     concatenated into a single dataframe. Each observation was tagged with a
-    \texttt{Race\_ID} (e.g., \texttt{2023\_Bahrain}) to enable group-aware
+    \texttt{Race\_ID} (e.g., \texttt{2023\_Bahrain}) for group-aware
     cross-validation.
 
   \item \textbf{Target Variable Definition.} The \texttt{Finishing\_Tier}
@@ -90,75 +102,51 @@ Data collection proceeded in five stages:
 
   \item \textbf{Feature Engineering.} Three metric predictors were constructed:
     \begin{itemize}
-      \item \textit{Fuel Mass Proxy:} A linear burn-off model starting at
-        110\,kg and decreasing proportionally with lap count:
+      \item \textit{Fuel Mass Proxy:} Linear burn-off from 110\,kg to 0\,kg:
         \[
           \text{Fuel Mass Proxy} = 110 - \frac{110}{\text{Max Lap}} \times
           \text{Lap Number}
         \]
       \item \textit{Tire Age:} Directly sourced from \texttt{TyreLife}.
-      \item \textit{Degradation $\times$ Fuel:} The mean-centered interaction:
+      \item \textit{Degradation $\times$ Fuel:} Mean-centered interaction:
         \[
           \text{Deg} \times \text{Fuel} =
           (\text{Tire Age} - \bar{x}_{\text{Tire Age}}) \times
           (\text{Fuel Mass} - \bar{x}_{\text{Fuel Mass}})
         \]
       \item \textit{Tire Compound Dummies:} $k{-}1$ dummy coding with the
-        first alphabetical compound (Hard) as baseline, yielding
-        \texttt{Tire\_SOFT} and \texttt{Tire\_MEDIUM}.
+        first alphabetical compound (Hard) as baseline.
     \end{itemize}
 \end{enumerate}
 
-\subsection{Statistical Treatment}
+\subsection{Ethics and Compliance}
 
-The following multivariate methods were applied:
+This study uses publicly available telemetry data from the FastF1 API, which
+interfaces with the official Formula One data feed. No human participants were
+involved, and no personally identifiable information was collected. Driver
+identifiers (e.g., ``VER'' for Max Verstappen) are public knowledge and used
+solely for data grouping. The study complies with FastF1's terms of use for
+academic research.
 
-\subsubsection{Box's M Test}
+\subsection{Ensuring Credibility}
 
-Box's M test evaluates the null hypothesis that the variance--covariance
-matrices of the continuous predictors are equal across the three finishing
-tiers. This test served as a method selection gate: if the assumption of
-homogeneous covariance matrices were met, Multiple Discriminant Analysis (MDA)
-would be appropriate; rejection of this assumption motivated the choice of
-multinomial logistic regression instead.
+Several measures were taken to ensure the credibility and reproducibility of
+the analysis:
 
-\subsubsection{Variance Inflation Factor (VIF)}
-
-VIF was computed for all predictors to detect multicollinearity. The standard
-threshold of VIF $\geq 10$ was used to flag problematic collinearity. This was
-particularly important for validating that the mean-centered interaction term
-and its component variables remain structurally independent.
-
-\subsubsection{Multinomial Logistic Regression (MLE)}
-
-The multinomial logistic regression model estimates simultaneous log-odds
-equations for each non-baseline tier:
-
-\[
-  \ln\!\left(\frac{P(Y = k)}{P(Y = \text{No Points})}\right) =
-  \beta_{0k} + \beta_{1k} \cdot \text{Grid} +
-  \beta_{2k} \cdot \text{TireAge} +
-  \beta_{3k} \cdot \text{Fuel} +
-  \beta_{4k} \cdot \text{Deg}\times\text{Fuel} +
-  \beta_{5k} \cdot \text{Tire\_MED} +
-  \beta_{6k} \cdot \text{Tire\_SOFT}
-\]
-
-where $k \in \{\text{Podium}, \text{Point Scorer}\}$ and ``No Points'' is the
-reference category. The model was fitted using the \texttt{multinom()} function
-from the \texttt{nnet} R package.
-
-\subsubsection{Statistical Inference}
-
-Z-scores and exact $p$-values were computed from the MLE coefficient estimates
-and standard errors. The significance threshold was set at $\alpha = 0.05$
-with $p < 0.01$ noted for highly significant predictors.
-
-\subsubsection{Machine Learning Validation}
-
-A scikit-learn \texttt{LogisticRegression} model with \texttt{class\_weight=
-"balanced"} was validated using LOGO-CV across the three races. In each fold,
-the model was trained on two races and tested on the held-out third race.
-Balanced class weighting was applied to mitigate the natural imbalance where
-``No Points'' laps outnumber ``Podium'' laps. Performance was evaluated using
-precision, recall, F1-score, and overall accuracy.
+\begin{itemize}
+  \item \textbf{Data transparency:} The full dataset (\texttt{f1\_clean\_data.csv})
+    and all source code (Jupyter notebooks, R scripts) are available in the
+    project repository for independent verification.
+  \item \textbf{Assumption testing:} Box's M test and VIF diagnostics were
+    conducted before model fitting, and results are reported regardless of
+    outcome.
+  \item \textbf{Strict validation:} LOGO-CV was chosen over random train-test
+    splits to prevent data leakage and produce honest out-of-sample performance
+    estimates.
+  \item \textbf{Balanced evaluation:} Class weighting was applied during
+    validation, and performance is reported via precision, recall, and F1-score
+   ---not just accuracy---to prevent misleading claims on imbalanced data.
+  \item \textbf{Reproducibility:} The complete analytical pipeline---from raw
+    data ingestion through statistical testing to ML validation---is documented
+    in executable notebooks with fixed random seeds where applicable.
+\end{itemize}

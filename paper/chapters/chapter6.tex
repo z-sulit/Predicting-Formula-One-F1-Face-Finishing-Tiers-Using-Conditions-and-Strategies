@@ -1,0 +1,111 @@
+% ============================================================
+% Chapter VI — Conclusion
+% ============================================================
+\section{Conclusion}
+
+\subsection{Summary of Results}
+
+This study predicted Formula One race finishing tiers (Podium, Point Scorer,
+No Points) using within-race telemetry data from the 2023 Bahrain, Saudi
+Arabian, and Australian Grands Prix. A dataset of 2,880 lap-level
+observations was constructed from FastF1 telemetry, with features engineered
+to represent the physical dynamics of race strategy: tire age, a linear fuel
+burn-off proxy, their mean-centered interaction term, and tire compound
+dummies, with grid position as a baseline control.
+
+Box's M test rejected the homogeneity of covariance matrices assumption
+($p < 2.2 \times 10^{-16}$), ruling out discriminant analysis and
+motivating multinomial logistic regression as the primary inferential model.
+VIF diagnostics confirmed the absence of problematic multicollinearity (all
+VIF $< 3.5$). The MLE model identified GridPosition ($p = 0.000$) and the
+Degradation $\times$ Fuel interaction term ($p = 0.0095$ for Podium) as
+statistically significant predictors. Leave-one-group-out cross-validation
+across the three races yielded 62.36\% overall accuracy, with podium recall
+reaching 89\%.
+
+\subsection{Connection to Literature}
+
+The findings are consistent with and extend several threads in the existing
+literature. The dominance of GridPosition as a predictor aligns with prior
+F1 prediction studies \parencite{kuhn2022f1, song2020} that identified
+starting position as the primary determinant of finishing order. The
+rejection of covariance homogeneity mirrors findings by
+\textcite{mendoza2023} in educational performance classification, suggesting
+this pattern is general across multi-tier classification problems.
+
+The central contribution---the significance of the Degradation $\times$ Fuel
+interaction term---extends the tire degradation literature
+\parencite{perdomo2021tire, baldi2022} and fuel load research
+\parencite{oldknow2022fuel} by demonstrating that the \textit{coupling} of
+these two forces, not just their individual effects, carries statistically
+measurable predictive power. This supports the feature engineering philosophy
+of \textcite{santos2020} and provides empirical backing for the physical
+interaction models used in race strategy simulations.
+
+The LOGO-CV validation approach responds directly to the methodological
+concerns raised by \textcite{varoquaux2019} about overly optimistic
+performance estimates in grouped data. By achieving 62.36\% accuracy under
+strict cross-circuit validation, the study demonstrates that the statistical
+relationships are genuine and not artifacts of data leakage.
+
+\subsection{Future Research Directions}
+
+\begin{enumerate}
+  \item \textbf{Expand the race calendar.} Including all 23 races from a full
+    F1 season would provide greater variance in weather conditions, circuit
+    types, and team performance trajectories, strengthening both statistical
+    power and generalizability.
+
+  \item \textbf{Incorporate weather variables.} Rain probability, track
+    temperature, and ambient temperature directly affect tire degradation
+    rates and compound selection. These would capture a significant source of
+    within-race variance.
+
+  \item \textbf{Model non-linear tire degradation.} The linear tire age
+    predictor could be replaced with a piecewise or polynomial term to
+    capture the ``cliff'' effect where tire performance drops sharply after
+    a critical wear threshold \parencite{baldi2022}.
+
+  \item \textbf{Include traffic and DRS effects.} Lap time delta to the car
+    ahead, DRS activation history, and pit stop timing would help explain
+    mid-field variance and improve Point Scorer tier predictions.
+
+  \item \textbf{Benchmark alternative classifiers.} Random forests,
+    gradient-boosted trees, and ordinal logistic regression should be
+    compared against the multinomial baseline to determine whether more
+    flexible or order-aware models improve classification.
+
+  \item \textbf{Apply to other racing series.} The feature engineering
+    framework---fuel proxy, tire degradation, interaction terms, grid
+    position control---is transferable to Formula 2, IndyCar, WEC, and
+    other series with telemetry data.
+\end{enumerate}
+
+\subsection{Recommendations}
+
+\begin{enumerate}
+  \item F1 analytics teams should model tire degradation and fuel mass as an
+    interaction rather than as independent effects when building race strategy
+    simulations and real-time prediction systems.
+
+  \item Researchers working with grouped motorsport data should adopt
+    LOGO-CV rather than random $k$-fold cross-validation to produce honest
+    out-of-sample performance estimates.
+
+  \item Feature engineering in sports analytics should prioritize physically
+    meaningful interaction terms over raw variables, as demonstrated by the
+    Degradation $\times$ Fuel term's significance even after controlling for
+    baseline pace.
+
+  \item Future studies should incorporate dynamic race state variables
+    (safety car status, DRS availability, tire compound age distribution
+    across the field) to improve mid-field prediction accuracy.
+\end{enumerate}
+
+The null hypothesis---that tire degradation, fuel mass, their interaction,
+and tire compound selection have no significant effect on finishing tier
+log-odds after controlling for grid position---is rejected. The Degradation
+$\times$ Fuel interaction term ($p = 0.0095 < \alpha = 0.05$) provides
+statistically significant evidence that the physical coupling of tire wear
+and fuel burn-off is a distinct, measurable predictor of podium finishes in
+Formula One.
