@@ -3,11 +3,36 @@
 % ============================================================
 \section{Results and Discussion}
 
+This chapter presents the findings from the multivariate statistical analyses
+and machine learning validation. Results are organized sequentially: first the
+assumption tests that guided method selection, then the primary inferential
+model, and finally the cross-validation outcomes.
+
+\subsection{Descriptive Statistics}
+
+The processed dataset contains 2,880 lap-level observations distributed across
+three finishing tiers. Figure~\ref{fig:class-dist} shows the class
+distribution.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fig1_class_distribution.png}
+  \caption{Distribution of Lap Observations by Finishing Tier}
+  \label{fig:class-dist}
+\end{figure}
+
+\noindent
+The ``No Points'' tier accounts for 50.97\% of all laps, ``Point Scorer''
+for 34.13\%, and ``Podium'' for 14.90\%. This imbalance reflects the
+real-world structure of Formula One: only three of twenty drivers finish on
+the podium, while the majority of the field competes for positions outside
+the points. The class imbalance was addressed during machine learning
+validation through balanced class weighting.
+
 \subsection{Box's M Test: Homogeneity of Covariance Matrices}
 
-The Box's M test was conducted to determine whether the variance--covariance
-matrices of the continuous predictors (Grid Position, Tire Age, Fuel Mass
-Proxy, and Degradation $\times$ Fuel) were equal across the three finishing
+Box's M test was conducted to determine whether the variance--covariance
+matrices of the continuous predictors were equal across the three finishing
 tiers.
 
 \begin{table}[htbp]
@@ -26,18 +51,21 @@ tiers.
 \end{table}
 
 The test yielded $\chi^{2}(20) = 160.419$, $p < 2.2 \times 10^{-16}$,
-formally rejecting the null hypothesis of equal covariance matrices across
-tiers. This result has direct methodological implications: Multiple
-Discriminant Analysis (MDA) requires homogeneous covariance matrices for valid
-classification, and the observed violation disqualifies it as a candidate
-method. \textbf{Multinomial logistic regression} was selected as the primary
-inferential model because it does not require this assumption.
+decisively rejecting the null hypothesis of equal covariance matrices. This
+result has a direct methodological consequence: Multiple Discriminant Analysis
+(MDA) requires homogeneous covariance structures for valid classification.
+Because this assumption is violated, MDA is disqualified and
+\textbf{multinomial logistic regression} was adopted as the primary
+inferential model. Unlike MDA, multinomial logistic regression makes no
+assumption about the covariance structure across groups---it estimates
+separate log-odds equations for each non-baseline category without requiring
+pooled covariance.
 
 \subsection{VIF Diagnostics: Multicollinearity Check}
 
-Before fitting the multinomial model, variance inflation factors were computed
-for all predictors to ensure that the engineered features---particularly the
-interaction term---did not introduce problematic multicollinearity.
+Variance inflation factors were computed for all predictors to ensure that
+the engineered features---particularly the interaction term and its component
+variables---did not introduce problematic multicollinearity.
 
 \begin{table}[htbp]
   \centering
@@ -47,24 +75,40 @@ interaction term---did not introduce problematic multicollinearity.
     \toprule
     \textbf{Variable} & \textbf{VIF} \\
     \midrule
-    GridPosition       & 1.007 \\
-    Tire\_Age          & 3.220 \\
-    Fuel\_Mass\_Proxy  & 2.315 \\
+    GridPosition         & 1.007 \\
+    Tire\_Age            & 3.220 \\
+    Fuel\_Mass\_Proxy    & 2.315 \\
     Degradation\_x\_Fuel & 1.725 \\
-    Tire\_MEDIUM       & 1.181 \\
-    Tire\_SOFT         & 1.156 \\
+    Tire\_MEDIUM         & 1.181 \\
+    Tire\_SOFT           & 1.156 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-All VIF values fall well below the standard threshold of 10, with the highest
-being 3.22 for Tire\_Age. The mean-centering applied to the interaction term
-effectively prevented structural multicollinearity---the Degradation $\times$
-Fuel VIF of 1.725 confirms that the interaction product and its components
-remain statistically independent. Notably, the near-perfect VIF of 1.007 for
-GridPosition confirms that starting position and tire degradation are
-mathematically unrelated, which is physically expected since grid position is
-determined in qualifying while tire age accumulates during the race.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fig2_vif.png}
+  \caption{VIF Diagnostics for Multicollinearity (threshold = 10)}
+  \label{fig:vif}
+\end{figure}
+
+All VIF values fall well below the standard threshold of 10 (Table~\ref{tab:vif},
+Figure~\ref{fig:vif}). The highest value is 3.22 for Tire\_Age, which is
+within acceptable limits and reflects a moderate correlation with Fuel\_Mass\_Proxy
+(VIF = 2.32)---an expected physical relationship since both variables increase
+monotonically with race distance.
+
+Critically, the Degradation $\times$ Fuel interaction term registers a VIF
+of only 1.725, confirming that the mean-centering procedure effectively
+eliminated structural multicollinearity. Without mean-centering, the product
+of two correlated variables would inherit and amplify their correlation,
+inflating standard errors and destabilizing coefficient estimates.
+
+The near-perfect VIF of 1.007 for GridPosition confirms that starting
+position and within-race telemetry are statistically independent---a finding
+that is physically expected since grid position is determined in qualifying
+(over a single flying lap) while tire age and fuel mass accumulate during
+the race.
 
 \subsection{Multinomial Logistic Regression (MLE)}
 
@@ -85,11 +129,13 @@ reference tier.
     Residual Deviance & 3821.657 \\
     AIC               & 3849.657 \\
     Observations      & 2,880 \\
+    Predictors        & 6 \\
+    Response Classes  & 3 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsubsection{Coefficient Estimates (Log-Odds)}
+\subsubsection{Coefficient Estimates and Significance}
 
 \begin{table}[htbp]
   \centering
@@ -100,18 +146,16 @@ reference tier.
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
-    Intercept           &  4.8565  &  2.9230 \\
-    GridPosition        & $-0.7978$ & $-0.2271$ \\
-    Tire\_Age           &  0.0291  & $-0.0036$ \\
-    Fuel\_Mass\_Proxy   & $-0.0149$ & $-0.0084$ \\
+    Intercept            &  4.8565  &  2.9230 \\
+    GridPosition         & $-0.7978$ & $-0.2271$ \\
+    Tire\_Age            &  0.0291  & $-0.0036$ \\
+    Fuel\_Mass\_Proxy    & $-0.0149$ & $-0.0084$ \\
     Degradation\_x\_Fuel &  0.0008  &  0.0002 \\
-    Tire\_MEDIUM        &  0.2267  & $-0.4601$ \\
-    Tire\_SOFT          &  0.2424  & $-0.2538$ \\
+    Tire\_MEDIUM         &  0.2267  & $-0.4601$ \\
+    Tire\_SOFT           &  0.2424  & $-0.2538$ \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-\subsubsection{Standard Errors}
 
 \begin{table}[htbp]
   \centering
@@ -122,18 +166,16 @@ reference tier.
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
-    Intercept           & 0.4206  & 0.2511 \\
-    GridPosition        & 0.0347  & 0.0107 \\
-    Tire\_Age           & 0.0136  & 0.0075 \\
-    Fuel\_Mass\_Proxy   & 0.0045  & 0.0023 \\
+    Intercept            & 0.4206  & 0.2511 \\
+    GridPosition         & 0.0347  & 0.0107 \\
+    Tire\_Age            & 0.0136  & 0.0075 \\
+    Fuel\_Mass\_Proxy    & 0.0045  & 0.0023 \\
     Degradation\_x\_Fuel & 0.0003  & 0.0002 \\
-    Tire\_MEDIUM        & 0.2628  & 0.1376 \\
-    Tire\_SOFT          & 0.2740  & 0.1317 \\
+    Tire\_MEDIUM         & 0.2628  & 0.1376 \\
+    Tire\_SOFT           & 0.2740  & 0.1317 \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-\subsubsection{Exact $p$-Values}
 
 \begin{table}[htbp]
   \centering
@@ -144,38 +186,108 @@ reference tier.
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
-    Intercept           & 0.0000 & 0.0000 \\
-    GridPosition        & 0.0000 & 0.0000 \\
-    Tire\_Age           & 0.0328 & 0.6337 \\
-    Fuel\_Mass\_Proxy   & 0.0009 & 0.0003 \\
+    Intercept            & 0.0000 & 0.0000 \\
+    GridPosition         & 0.0000 & 0.0000 \\
+    Tire\_Age            & 0.0328 & 0.6337 \\
+    Fuel\_Mass\_Proxy    & 0.0009 & 0.0003 \\
     Degradation\_x\_Fuel & 0.0095 & 0.2174 \\
-    Tire\_MEDIUM        & 0.3883 & 0.0008 \\
-    Tire\_SOFT          & 0.3764 & 0.0540 \\
+    Tire\_MEDIUM         & 0.3883 & 0.0008 \\
+    Tire\_SOFT           & 0.3764 & 0.0540 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig3_coefficients.png}
+  \caption{MLE Coefficients by Tier (filled bars = significant at $p < 0.05$)}
+  \label{fig:coefficients}
+\end{figure}
+
 \subsubsection{Interpretation of Key Findings}
 
-Two results stand out from the significance testing:
+Figure~\ref{fig:coefficients} visualizes the coefficient estimates, with
+filled bars indicating statistical significance at $\alpha = 0.05$.
 
-\begin{enumerate}
-  \item \textbf{GridPosition ($p = 0.000$ for both tiers).} Starting position
-    is overwhelmingly significant, confirming its role as a baseline control.
-    The coefficient of $-0.80$ for the Podium tier means that each position
-    further back on the grid reduces the log-odds of a podium finish by
-    approximately 0.80 units---a substantial effect that reflects the
-    difficulty of overtaking in modern F1.
+\paragraph{GridPosition ($p = 0.000$ for both tiers).}
+Starting position is overwhelmingly significant for both the Podium and Point
+Scorer tiers. The coefficient of $-0.80$ for Podium means that each position
+further back on the grid reduces the log-odds of a podium finish by
+approximately 0.80 units. In odds-ratio terms, moving back one grid position
+multiplies the odds of a podium finish by $e^{-0.80} \approx 0.45$---a
+55\% reduction per grid slot. This is the dominant predictor in the model and
+confirms the well-known difficulty of overtaking in modern F1.
 
-  \item \textbf{Degradation $\times$ Fuel ($p = 0.0095$ for Podium).} With
-    grid position controlling for raw car pace, the interaction term achieves
-    significance at $\alpha < 0.01$ for the Podium tier. The positive
-    coefficient indicates that when tire age and fuel mass are both high
-    (early-race conditions where the car is heavy and tires are fresh), the
-    combined effect favors podium outcomes. This is physically consistent:
-    top teams manage tire degradation more effectively under heavy fuel loads,
-    maintaining lap time while competitors lose performance.
-\end{enumerate}
+\paragraph{Degradation $\times$ Fuel ($p = 0.0095$ for Podium).}
+With grid position controlling for raw car pace, the interaction term achieves
+significance at $\alpha < 0.01$ for the Podium tier. The positive coefficient
+(0.0008) indicates that when tire age and fuel mass are both high---i.e.,
+early-race conditions where the car is heavy and tires are relatively
+fresh---the combined physical effect favors podium outcomes. This is
+mechanistically consistent: top-tier teams and drivers manage tire degradation
+more effectively under heavy fuel loads, maintaining competitive lap times
+while midfield competitors lose performance to the combined stress of mass
+and rubber wear.
+
+\paragraph{Fuel\_Mass\_Proxy ($p = 0.0009$ Podium, $p = 0.0003$ Point Scorer).}
+Fuel mass is significant for both tiers. The negative coefficients mean that
+as fuel burns off (decreasing mass), the log-odds of being in the Podium or
+Point Scorer tier increase relative to No Points. This reflects the physical
+reality that lighter cars are faster---but since fuel mass decreases
+monotonically with lap number, this variable also partially captures the
+effect of race progression.
+
+\paragraph{Tire\_MEDIUM ($p = 0.0008$ for Point Scorer).}
+Medium tire compound is significant for the Point Scorer tier with a negative
+coefficient ($-0.46$), indicating that laps on medium tires are associated
+with lower log-odds of being in the Point Scorer tier relative to the Hard
+baseline. This likely reflects strategic patterns: top teams often start on
+Softs and switch to Hards, while midfield teams rely more heavily on Mediums.
+
+\paragraph{Non-significant predictors.}
+Tire\_SOFT ($p = 0.3764$ Podium, $p = 0.0540$ Point Scorer) and
+Tire\_MEDIUM for Podium ($p = 0.3883$) do not reach significance. This
+suggests that compound choice alone, independent of how the tire degrades
+over its stint, does not differentiate podium performers from the baseline.
+
+\subsection{Grid Position and Finishing Tier}
+
+Figure~\ref{fig:grid-box} shows the distribution of grid positions across
+finishing tiers, providing visual confirmation of GridPosition's predictive
+power.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fig5_gridposition_boxplot.png}
+  \caption{Grid Position Distribution by Finishing Tier}
+  \label{fig:grid-box}
+\end{figure}
+
+Podium finishers cluster at grid positions 1--5 with a tight interquartile
+range, while No Points finishers span positions 8--20 with substantial
+variance. Point Scorers occupy the middle ground (positions 4--12). The
+minimal overlap between Podium and No Points boxes confirms why
+GridPosition achieves such high statistical significance.
+
+\subsection{Tire Age vs.\ Fuel Mass by Tier}
+
+Figure~\ref{fig:scatter} visualizes the two primary telemetry features
+across all three tiers, revealing the physical clustering patterns the model
+captures.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/fig6_scatter_tierfuel.png}
+  \caption{Tire Age vs.\ Fuel Mass Proxy by Finishing Tier}
+  \label{fig:scatter}
+\end{figure}
+
+The scatter plot shows that Podium laps (gold) are concentrated in the
+low--tire-age, high--fuel-mass region (early race, fresh tires) and the
+high--tire-age, low--fuel-mass region (late race, light car on worn tires).
+No Points laps (bronze) are more uniformly distributed. The interaction term
+captures the diagonal structure where these two forces combine differently
+across the race timeline.
 
 \subsection{Machine Learning Validation (LOGO-CV)}
 
@@ -192,7 +304,7 @@ using leave-one-group-out cross-validation across the three races.
   \begin{tabular}{lcccc}
     \toprule
     \textbf{Tier} & \textbf{Precision} & \textbf{Recall} &
-    \textbf{F1-Score} & \textbf{Support (laps)} \\
+    \textbf{F1-Score} & \textbf{Support} \\
     \midrule
     No Points     & 0.74 & 0.67 & 0.70 & 1,468 \\
     Podium        & 0.57 & 0.89 & 0.69 & 429 \\
@@ -203,26 +315,46 @@ using leave-one-group-out cross-validation across the three races.
   \end{tabular}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fig4_confusion_matrix.png}
+  \caption{Confusion Matrix from LOGO-CV}
+  \label{fig:confusion}
+\end{figure}
+
 \subsubsection{Interpretation}
 
 \textbf{Podium recall (0.89).} The model correctly identified 89\% of all
 actual podium-finishing laps across held-out circuits. This is the strongest
-result and demonstrates that the combination of grid position control and
-telemetry-based features captures top-tier performance signatures reliably.
+result in the validation and demonstrates that the combination of grid
+position control and telemetry-based features captures top-tier performance
+signatures reliably---even when the model has never seen that circuit's data.
 
-\textbf{Podium precision (0.57).} When the model predicts a podium lap, it
-is correct 57\% of the time. While this leaves room for improvement, it
-significantly outperforms random guessing for a three-class problem
-(chance $\approx$ 33\%).
+\textbf{Podium precision (0.57).} Of all laps the model predicted as
+``Podium,'' 57\% were correct. The 43\% false positive rate consists
+primarily of Point Scorer laps misclassified as Podium---an understandable
+error given that positions 4--6 often run similar pace to P3.
 
-\textbf{Point Scorer recall (0.45).} The model caught 45\% of
+\textbf{No Points performance (Precision = 0.74, Recall = 0.67).} The
+model is most precise when identifying No Points laps, correctly flagging
+74\% of its predictions for this class. The 33\% miss rate reflects the
+reality that some drivers in backmarker grid positions produce strong
+individual laps (e.g., during low-fuel late stints) that the model
+temporarily classifies as Point Scorer pace.
+
+\textbf{Point Scorer recall (0.45).} The model caught only 45\% of
 point-scoring laps. The F1 midfield is genuinely harder to model---DRS
-trains, traffic, undercut strategies, and intra-team orders create variance
-that telemetry alone cannot fully explain. Nevertheless, 45\% recall is well
-above chance and indicates that the model captures a meaningful portion of
-mid-field dynamics.
+trains create artificial pace spikes, undercut strategies shuffle the order
+independently of telemetry, and intra-team race orders can suppress or
+inflate individual lap times. The confusion matrix (Figure~\ref{fig:confusion})
+shows that most Point Scorer errors split between Podium (over-prediction)
+and No Points (under-prediction), confirming this tier sits at the decision
+boundary.
 
 \textbf{Overall accuracy (62.36\%).} For a three-class problem with natural
-class imbalance and cross-circuit validation (no data leakage), this
-represents a credible result that confirms the statistical model generalizes
-beyond its training data.
+class imbalance and strict cross-circuit validation (no data leakage), this
+substantially outperforms random guessing (33.3\%) and majority-class
+prediction (51.0\%). More importantly, the LOGO-CV design ensures this is an
+honest estimate of out-of-sample performance---the model cannot memorize
+circuit-specific patterns because each fold tests on a completely unseen
+race.

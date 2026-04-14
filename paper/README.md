@@ -12,37 +12,63 @@ Overleaf project for the Multivariate Statistics paper.
 
 | File | What It Is |
 |------|-----------|
-| `main.tex` | Master document — formatting, margins, fonts, TOC. Don't touch unless changing layout |
+| `main.tex` | Master document — APA formatting, margins, fonts, TOC |
 | `references.bib` | All citations. Add new references here, cite with `\textcite{key}` or `\parencite{key}` |
-| `chapters/chapter1.tex` | Introduction — Background, Conceptual Framework, Problem, Hypotheses, Scope, Significance |
-| `chapters/chapter2.tex` | Review of Related Literature — Foreign studies, Local studies, Synthesis, Definition of Terms |
-| `chapters/chapter3.tex` | Methodology — Research Design, Data Source, Instrumentation, Statistical Treatment |
-| `chapters/chapter4.tex` | Results and Discussion — All statistical tables and interpretation |
-| `chapters/chapter5.tex` | Summary, Conclusions, Recommendations |
-| `chapters/appendix.tex` | Raw R/Python outputs, dataset summary tables |
-| `figures/` | Drop PNGs here, reference with `\includegraphics{figures/filename.png}` |
+| `chapters/chapter1.tex` | Ch I: Introduction — Background, Problem, Purpose, Goals, Scope, Significance |
+| `chapters/chapter2.tex` | Ch II: Literature Review — Theory, Existing Studies, Conceptual Framework, Research Gap, Definitions |
+| `chapters/chapter3.tex` | Ch III: Methodology — Approach, Design, Sampling, Tools, Collection, Ethics, Credibility |
+| `chapters/chapter4.tex` | Ch IV: Findings — All statistical tables, figures, hypothesis testing |
+| `chapters/chapter5.tex` | Ch V: Discussion — Interpretation, Literature connection, Limitations, Practical impacts |
+| `chapters/chapter6.tex` | Ch VI: Conclusion — Summary, Literature connection, Future directions, Recommendations |
+| `chapters/appendix.tex` | Appendices — Raw R/Python outputs, dataset summary |
+| `figures/` | PNG figures generated from data (6 figures) |
+
+## 7-Chapter Structure
+
+| Chapter | Title | Content |
+|---------|-------|---------|
+| I | Introduction | Background, Problem Statement, Research Purpose, Goals & Questions, Scope, Significance |
+| II | Literature Review | Theoretical Foundation, Existing Studies (Foreign + Local), Conceptual Framework, Research Gap, Definition of Terms |
+| III | Methodology | Research Approach, Design, Sampling, Tools & Instruments, Data Collection, Ethics, Credibility |
+| IV | Findings | Key results, Data representation (tables + figures), Unexpected results, Hypothesis testing |
+| V | Discussion | Interpreting results, Relating to literature, Study limitations, Practical impacts |
+| VI | Conclusion | Summary, Connection to literature, Future research, Recommendations |
+| VII | References/Bibliography | Auto-generated from `references.bib` (APA 7th, hanging indent) |
+
+## Figures (generated from data)
+
+| Figure | Description |
+|--------|-------------|
+| `fig1_class_distribution.png` | Class distribution bar chart (Podium / Point Scorer / No Points) |
+| `fig2_vif.png` | VIF diagnostics bar chart with threshold line |
+| `fig3_coefficients.png` | MLE coefficient plot by tier (significant = filled) |
+| `fig4_confusion_matrix.png` | Confusion matrix heatmap from LOGO-CV |
+| `fig5_gridposition_boxplot.png` | Grid position distribution by tier |
+| `fig6_scatter_tierfuel.png` | Tire age vs fuel mass scatter colored by tier |
 
 ## What's Done
 
-- [x] Full paper scaffold (all 5 chapters + appendices)
-- [x] APA 7th formatting (margins, spacing, page numbers, title page)
-- [x] All 6 statistical tables from the analysis (Box's M, VIF, coefficients, standard errors, p-values, LOGO-CV)
+- [x] Full 7-chapter paper structure matching requirements
+- [x] APA 7th formatting (1" margins, double spacing, 0.5" paragraph indent, page numbers top right)
+- [x] All 6 statistical tables from the analysis
+- [x] 6 data-generated figures in `figures/`
 - [x] 20 references in `references.bib` (11 foreign, 5 local, 4 textbooks)
+- [x] Ethics and Credibility sections in Methodology
+- [x] Hypothesis testing and unexpected results in Findings
 
 ## What Needs Group Input
 
 ### References — verify and replace (HIGH PRIORITY)
-The entries in `references.bib` are structurally correct but some author names, titles, and journals for the racing analytics papers are placeholders that match our methodology. **Each person should verify the papers they're citing actually exist, or replace them with real ones from your own research.**
+The entries in `references.bib` are structurally correct but some author names, titles, and journals for the racing analytics papers are placeholders. **Each person should verify the papers they're citing actually exist, or replace them with real ones.**
 
 Target: minimum 20 references, mix of foreign and local.
 
 ### Chapter II — RRL needs real sources
 - Foreign studies section has placeholder citations — swap with actual papers you found
 - Local studies section has 4 entries — verify or replace with real Philippine studies
-- If you add/remove references, update `references.bib` accordingly
 
-### Figures
-- If the prof wants visual figures (confusion matrix heatmap, coefficient plots, etc.), drop them in `figures/` and add `\begin{figure}` blocks in chapter4.tex
+### Title page
+- Replace `[Instructor Name]` in `main.tex` with your professor's actual name
 
 ### Proofreading
 - Read through all chapters for tone, consistency, and flow
@@ -69,17 +95,16 @@ Target: minimum 20 references, mix of foreign and local.
 }
 ```
 
-## Formatting Specs (per requirements)
+## Formatting Specs
 
 | Setting | Value |
 |---------|-------|
 | Font | Times New Roman 12pt |
 | Spacing | Double |
-| Left margin | 1.25 inches |
-| Other margins | 1 inch |
+| Margins | 1 inch all sides |
+| Paragraph indent | 0.5 inch |
 | Page numbers | Top right |
-| Tables | Table 1, Table 2, ... (auto-numbered) |
-| Figures | Figure 1, Figure 2, ... (auto-numbered) |
+| Reference style | APA 7th, hanging indent 0.5" |
 
 ## Group
 
