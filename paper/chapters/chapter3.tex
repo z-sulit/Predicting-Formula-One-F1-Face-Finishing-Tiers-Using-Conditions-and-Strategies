@@ -1,0 +1,164 @@
+% ============================================================
+% Chapter III — Methodology
+% ============================================================
+\section{Methodology}
+
+\subsection{Research Design}
+
+This study employs a quantitative, cross-sectional research design using
+multivariate statistical methods. The primary inferential tool is
+\textbf{multinomial logistic regression} estimated via maximum likelihood
+(MLE), with \textbf{leave-one-group-out cross-validation} (LOGO-CV) serving
+as the machine learning validation framework. The research follows a
+predictive modeling approach: features are engineered from within-race
+telemetry data, the statistical model is fitted using MLE, and
+generalizability is assessed through cross-validation across circuits.
+
+\subsection{Data Source}
+
+All data were obtained from the \textbf{FastF1} Python API, which provides
+programmatic access to official F1 timing, telemetry, and session data. Three
+races from the 2023 Formula One World Championship were selected:
+
+\begin{enumerate}
+  \item \textbf{Bahrain Grand Prix} (Sakhir International Circuit) ---
+    permanent desert circuit with high tire degradation.
+  \item \textbf{Saudi Arabian Grand Prix} (Jeddah Corniche Circuit) ---
+    high-speed street circuit with minimal run-off.
+  \item \textbf{Australian Grand Prix} (Albert Park Circuit) ---
+    parkland circuit with mixed slow-speed and medium-speed corners.
+\end{enumerate}
+
+These three circuits were chosen to provide architectural diversity:
+permanent, street, and parkland layouts ensure that the model encounters
+meaningfully different track characteristics rather than memorizing a single
+circuit profile.
+
+\subsection{Participants and Sampling}
+
+The unit of analysis is the \textbf{individual lap}. Every lap from every
+driver across all three events was included in the dataset, yielding a total
+of \textbf{2,880 observations} after data cleaning. No sampling was performed;
+the dataset represents the complete population of completed laps from the three
+selected races.
+
+\subsection{Instrumentation}
+
+The sole data collection instrument is the FastF1 Python library (v3.8.2),
+which interfaces with the official F1 data feed. The following data fields
+were extracted:
+
+\begin{itemize}
+  \item \texttt{LapTime}, \texttt{LapNumber} --- lap timing
+  \item \texttt{TyreLife} --- cumulative laps on current tire set (tire age)
+  \item \texttt{Compound} --- tire compound (Soft, Medium, Hard)
+  \item \texttt{Position} --- running position at lap completion
+  \item \texttt{GridPosition} --- starting grid position
+  \item \texttt{Driver} --- driver abbreviation
+  \item \texttt{Status} --- finishing status (Finished, Retired, etc.)
+  \item \texttt{ClassifiedPosition} --- official race classification
+\end{itemize}
+
+\subsection{Data Collection Procedure}
+
+Data collection proceeded in five stages:
+
+\begin{enumerate}[label=Phase \arabic*:, leftmargin=*]
+  \item \textbf{Session Loading.} Each race session was loaded via
+    \texttt{fastf1.get\_session()} with telemetry, lap, and weather data
+    enabled. The FastF1 cache system was used to store downloaded data
+    locally.
+
+  \item \textbf{Multi-Race Stacking.} All laps from the three sessions were
+    concatenated into a single dataframe. Each observation was tagged with a
+    \texttt{Race\_ID} (e.g., \texttt{2023\_Bahrain}) to enable group-aware
+    cross-validation.
+
+  \item \textbf{Target Variable Definition.} The \texttt{Finishing\_Tier}
+    variable was mapped from \texttt{Position}:
+    \begin{itemize}
+      \item \textbf{Podium:} Position $\leq 3$
+      \item \textbf{Point Scorer:} $4 \leq$ Position $\leq 10$
+      \item \textbf{No Points:} Position $> 10$
+    \end{itemize}
+
+  \item \textbf{DNF Protocol.} Drivers with \texttt{Status = "Retired"} or
+    \texttt{ClassifiedPosition = "R"} were flagged, and all their completed
+    laps were reassigned to the ``No Points'' tier. This prevents a driver
+    running P2 pace before a mechanical failure from contaminating the Podium
+    cluster.
+
+  \item \textbf{Feature Engineering.} Three metric predictors were constructed:
+    \begin{itemize}
+      \item \textit{Fuel Mass Proxy:} A linear burn-off model starting at
+        110\,kg and decreasing proportionally with lap count:
+        \[
+          \text{Fuel Mass Proxy} = 110 - \frac{110}{\text{Max Lap}} \times
+          \text{Lap Number}
+        \]
+      \item \textit{Tire Age:} Directly sourced from \texttt{TyreLife}.
+      \item \textit{Degradation $\times$ Fuel:} The mean-centered interaction:
+        \[
+          \text{Deg} \times \text{Fuel} =
+          (\text{Tire Age} - \bar{x}_{\text{Tire Age}}) \times
+          (\text{Fuel Mass} - \bar{x}_{\text{Fuel Mass}})
+        \]
+      \item \textit{Tire Compound Dummies:} $k{-}1$ dummy coding with the
+        first alphabetical compound (Hard) as baseline, yielding
+        \texttt{Tire\_SOFT} and \texttt{Tire\_MEDIUM}.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Statistical Treatment}
+
+The following multivariate methods were applied:
+
+\subsubsection{Box's M Test}
+
+Box's M test evaluates the null hypothesis that the variance--covariance
+matrices of the continuous predictors are equal across the three finishing
+tiers. This test served as a method selection gate: if the assumption of
+homogeneous covariance matrices were met, Multiple Discriminant Analysis (MDA)
+would be appropriate; rejection of this assumption motivated the choice of
+multinomial logistic regression instead.
+
+\subsubsection{Variance Inflation Factor (VIF)}
+
+VIF was computed for all predictors to detect multicollinearity. The standard
+threshold of VIF $\geq 10$ was used to flag problematic collinearity. This was
+particularly important for validating that the mean-centered interaction term
+and its component variables remain structurally independent.
+
+\subsubsection{Multinomial Logistic Regression (MLE)}
+
+The multinomial logistic regression model estimates simultaneous log-odds
+equations for each non-baseline tier:
+
+\[
+  \ln\!\left(\frac{P(Y = k)}{P(Y = \text{No Points})}\right) =
+  \beta_{0k} + \beta_{1k} \cdot \text{Grid} +
+  \beta_{2k} \cdot \text{TireAge} +
+  \beta_{3k} \cdot \text{Fuel} +
+  \beta_{4k} \cdot \text{Deg}\times\text{Fuel} +
+  \beta_{5k} \cdot \text{Tire\_MED} +
+  \beta_{6k} \cdot \text{Tire\_SOFT}
+\]
+
+where $k \in \{\text{Podium}, \text{Point Scorer}\}$ and ``No Points'' is the
+reference category. The model was fitted using the \texttt{multinom()} function
+from the \texttt{nnet} R package.
+
+\subsubsection{Statistical Inference}
+
+Z-scores and exact $p$-values were computed from the MLE coefficient estimates
+and standard errors. The significance threshold was set at $\alpha = 0.05$
+with $p < 0.01$ noted for highly significant predictors.
+
+\subsubsection{Machine Learning Validation}
+
+A scikit-learn \texttt{LogisticRegression} model with \texttt{class\_weight=
+"balanced"} was validated using LOGO-CV across the three races. In each fold,
+the model was trained on two races and tested on the held-out third race.
+Balanced class weighting was applied to mitigate the natural imbalance where
+``No Points'' laps outnumber ``Podium'' laps. Performance was evaluated using
+precision, recall, F1-score, and overall accuracy.

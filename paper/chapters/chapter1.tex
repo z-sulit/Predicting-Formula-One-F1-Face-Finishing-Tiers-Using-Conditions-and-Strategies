@@ -1,0 +1,125 @@
+% ============================================================
+% Chapter I — Introduction
+% ============================================================
+\section{Introduction}
+
+\subsection{Background of the Study}
+
+Formula One (F1) represents the pinnacle of motorsport engineering and strategy.
+Each Grand Prix weekend produces terabytes of telemetry data---lap times, tire
+degradation curves, fuel load estimates, weather conditions, and driver input
+signals---that teams analyze in real time to gain competitive advantage. Despite
+the sport's data-rich environment, predicting race outcomes remains an open
+challenge because finishing position is determined by a complex interplay of
+factors: raw car pace, tire compound selection, degradation management, fuel
+burn-off, track architecture, and driver skill.
+
+Historically, race outcome prediction has relied on either domain-expert
+judgment or machine learning models trained on aggregate season statistics.
+While these approaches achieve reasonable accuracy, they often treat each race
+as an independent event and ignore the within-race physical dynamics---the
+very variables that differentiate a podium finisher from a mid-field runner.
+
+This study bridges that gap by engineering features directly from within-race
+telemetry and applying multivariate statistical methods to model the
+relationship between race strategy variables and a driver's finishing tier.
+Rather than predicting exact finishing position (a continuous regression
+problem with high variance), we frame the task as a three-class classification
+problem: \textbf{Podium} (positions 1--3), \textbf{Point Scorer} (positions
+4--10), and \textbf{No Points} (positions 11 and below). This tiered approach
+reduces noise from unpredictable events---safety cars, first-lap incidents,
+mechanical failures---while preserving the strategic information that
+determines race outcomes.
+
+\subsection{Conceptual Framework}
+
+The study is grounded in the premise that a driver's finishing tier can be
+modeled as a function of three categories of predictors:
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Baseline Pace Control} --- Grid Position captures the
+    intrinsic car--driver combination's qualifying performance, absorbing
+    the aerodynamic and engine capability differential between teams.
+  \item \textbf{Tire Strategy} --- Tire Age (degradation) and Compound
+    (Soft, Medium, Hard) represent the strategic choice of rubber and its
+    wear trajectory over a stint.
+  \item \textbf{Physical Interaction} --- Fuel Mass Proxy (linear burn-off
+    from 110\,kg to 0\,kg) and the interaction term Degradation $\times$
+    Fuel capture the combined effect of decreasing car mass and increasing
+    tire wear---two forces that compound over a race distance.
+\end{enumerate}
+
+\noindent
+The interaction term is mean-centered prior to multiplication to prevent
+structural multicollinearity, allowing the coefficient to be interpreted as
+the \textit{combined} effect of both forces rather than their individual
+contributions.
+
+\subsection{Statement of the Problem}
+
+This study aims to determine whether within-race telemetry variables---tire
+degradation, fuel burn-off, their interaction, and tire compound
+selection---can statistically predict a driver's finishing tier when
+controlling for baseline grid position. Specifically, it seeks to answer:
+
+\begin{enumerate}
+  \item Is there a statistically significant relationship between the
+    engineered predictors and the probability of finishing in the Podium or
+    Point Scorer tier relative to the No Points baseline?
+  \item Does the interaction between tire degradation and fuel mass provide
+    additional predictive power beyond their individual effects?
+  \item Can a multinomial logistic regression model, trained on these
+    predictors, generalize to unseen race circuits using leave-one-group-out
+    cross-validation?
+\end{enumerate}
+
+\subsection{Hypotheses}
+
+\begin{description}
+  \item[$H_{0}$:] Tire degradation, fuel mass proxy, their interaction term,
+    and tire compound selection have no statistically significant effect on
+    the log-odds of a driver finishing in the Podium or Point Scorer tier,
+    after controlling for grid position.
+  \item[$H_{1}$:] At least one of the predictors---specifically the
+    Degradation $\times$ Fuel interaction term---has a statistically
+    significant effect on the log-odds of finishing in the Podium or Point
+    Scorer tier ($p < 0.05$).
+\end{description}
+
+\subsection{Scope and Limitations}
+
+This study uses lap-level telemetry data from the 2023 Bahrain, Saudi Arabian,
+and Australian Grands Prix---covering permanent, street, and parkland circuit
+types. The dataset comprises 2,880 observations after cleaning.
+
+\textbf{Scope:}
+\begin{itemize}
+  \item The target variable is a three-class ordinal category (Podium, Point
+    Scorer, No Points).
+  \item Predictors are limited to grid position, tire age, fuel mass proxy,
+    the degradation--fuel interaction term, and tire compound dummies.
+  \item The statistical framework is multinomial logistic regression (MLE)
+    validated via LOGO-CV.
+\end{itemize}
+
+\textbf{Limitations:}
+\begin{itemize}
+  \item The fuel mass proxy is an engineered linear approximation; actual fuel
+    loads are proprietary and vary by team strategy.
+  \item Three races may not capture the full variance of F1 outcomes across a
+    23-race calendar with mixed weather, sprint formats, and variable
+    DRS/regulation environments.
+  \item DRS trains, safety car periods, and intra-team strategy calls are not
+    explicitly modeled and contribute to residual variance in the mid-field.
+\end{itemize}
+
+\subsection{Significance of the Study}
+
+This research contributes to the intersection of sports analytics and
+multivariate statistical modeling by demonstrating that physically meaningful
+telemetry features---not just aggregate season statistics---can predict race
+outcomes with interpretable coefficients. The mean-centered interaction term
+provides a template for modeling compound physical effects in other domains
+where multiple degradation processes operate simultaneously. For the F1
+analytics community, the LOGO-CV validation proves that the model captures
+circuit-generalizable patterns rather than memorizing a single track layout.

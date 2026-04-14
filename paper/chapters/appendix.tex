@@ -1,0 +1,119 @@
+% ============================================================
+% Appendix — Raw Data Outputs and Code
+% ============================================================
+
+\section{Appendices}
+
+\subsection{Appendix A: Dataset Summary}
+
+The processed dataset (\texttt{f1\_clean\_data.csv}) contains 2,880
+observations with the following variables:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Dataset Variable Summary}
+  \label{tab:dataset-summary}
+  \small
+  \begin{tabular}{llr}
+    \toprule
+    \textbf{Variable} & \textbf{Type} & \textbf{Values / Range} \\
+    \midrule
+    Race\_ID           & Categorical   & 2023\_Bahrain, 2023\_SaudiArabia, 2023\_Australia \\
+    Driver             & Categorical   & 20 unique drivers \\
+    LapNumber          & Continuous    & 1--58 \\
+    Finishing\_Tier    & Ordinal (3)   & Podium, Point Scorer, No Points \\
+    GridPosition       & Continuous    & 1--20 \\
+    Tire\_Age          & Continuous    & 1--46 \\
+    Fuel\_Mass\_Proxy  & Continuous    & 5.79--108.07 \\
+    Degradation\_x\_Fuel & Continuous  & $-$1559 to 1559 (approx.) \\
+    Tire\_MEDIUM       & Binary        & 0 or 1 \\
+    Tire\_SOFT         & Binary        & 0 or 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Appendix B: Class Distribution}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Finishing Tier Distribution}
+  \label{tab:class-dist}
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Tier} & \textbf{Laps} & \textbf{Percentage} \\
+    \midrule
+    No Points     & 1,468 & 50.97\% \\
+    Point Scorer  &   983 & 34.13\% \\
+    Podium        &   429 & 14.90\% \\
+    \midrule
+    \textbf{Total} & \textbf{2,880} & \textbf{100\%} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Appendix C: R Statistical Output}
+
+\small
+\textbf{Box's M Test:}
+\begin{verbatim}
+       Chi-Sq (approx.)  DF   p-value
+Box's M  160.419         20   < 2.2e-16
+\end{verbatim}
+
+\textbf{VIF Output:}
+\begin{verbatim}
+       GridPosition  Tire_Age  Fuel_Mass_Proxy
+VIF    1.007456      3.219551  2.314596
+       Degradation_x_Fuel  Tire_MEDIUM  Tire_SOFT
+VIF    1.724701            1.181336     1.155771
+\end{verbatim}
+
+\textbf{Multinomial Logistic Regression Summary:}
+\begin{verbatim}
+Call:
+multinom(formula = Finishing_Tier ~ GridPosition + Tire_Age +
+    Fuel_Mass_Proxy + Degradation_x_Fuel + Tire_MEDIUM +
+    Tire_SOFT, data = df)
+
+                    Coefficients:
+                     (Intercept) GridPosition   Tire_Age Fuel_Mass_Proxy
+Podium               4.856516    -0.7977605   0.029083324 -0.014936022
+Point Scorer         2.922957    -0.2270777  -0.003556666 -0.008448375
+                    Degradation_x_Fuel Tire_MEDIUM Tire_SOFT
+Podium               0.0008256694      0.2267218   0.2424192
+Point Scorer         0.0002182545     -0.4600896  -0.2538360
+
+Residual Deviance: 3821.657
+AIC: 3849.657
+\end{verbatim}
+
+\textbf{Exact $p$-Values:}
+\begin{verbatim}
+                     (Intercept) GridPosition Tire_Age Fuel_Mass_Proxy
+Podium               0.0000      0.0000       0.0328   0.0009
+Point Scorer         0.0000      0.0000       0.6337   0.0003
+                    Degradation_x_Fuel Tire_MEDIUM Tire_SOFT
+Podium               0.0095             0.3883      0.3764
+Point Scorer         0.2174             0.0008      0.0540
+\end{verbatim}
+\normalsize
+
+\subsection{Appendix D: Python ML Validation Output}
+
+\small
+\begin{verbatim}
+--- CLASSIFICATION HIT RATIO (UNSEEN RACES) ---
+Overall Accuracy: 62.36%
+
+--- CLASSIFICATION REPORT ---
+              precision    recall  f1-score   support
+
+   No Points       0.74      0.67      0.70      1468
+      Podium       0.57      0.89      0.69       429
+Point Scorer       0.49      0.45      0.47       983
+
+    accuracy                           0.62      2880
+   macro avg       0.60      0.67      0.62      2880
+weighted avg       0.63      0.62      0.62      2880
+\end{verbatim}
+\normalsize

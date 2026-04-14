@@ -1,0 +1,166 @@
+% ============================================================
+% Chapter II — Review of Related Literature
+% ============================================================
+\section{Review of Related Literature}
+
+\subsection{Foreign Studies}
+
+% --- Racing analytics & prediction ---
+The application of statistical and machine learning methods to motorsport
+prediction has grown substantially in the past decade.
+\textcite{fister2021} conducted a systematic review of computational
+intelligence methods in motorsport, identifying lap time prediction,
+tire strategy optimization, and race outcome modeling as the three dominant
+research streams. Their survey noted that most studies rely on aggregated
+season-level features rather than within-race telemetry, leaving a gap in
+modeling the physical dynamics that determine finishing order.
+
+\textcite{kuhn2022f1} applied gradient-boosted trees and neural networks to
+predict finishing positions across the 2016--2020 F1 seasons using driver
+characteristics, constructor budgets, and circuit features. While their model
+achieved 71\% top-5 accuracy, it treated each race as independent and did not
+incorporate tire degradation or fuel load dynamics. Similarly,
+\textcite{song2020} used deep learning on historical F1 data (1950--2019) but
+acknowledged that the model's inability to capture within-race state changes
+limited its predictive power for individual Grand Prix outcomes.
+
+% --- Tire degradation modeling ---
+Tire degradation is one of the most critical variables in race strategy.
+\textcite{perdomo2021tire} developed a physics-informed neural network to
+model Pirelli tire wear using thermal and mechanical telemetry from F1
+sessions. Their model demonstrated that tire surface temperature, lateral
+forces, and cumulative laps on a compound jointly determine the degradation
+curve---supporting the use of tire age as a proxy variable in outcome models.
+
+\textcite{baldi2022} modeled tire performance degradation in motorsport using
+nonlinear regression, showing that degradation follows an exponential rather
+than linear trajectory after a critical wear threshold. This finding informed
+our decision to include tire age as a continuous predictor while
+acknowledging that the linear approximation may understate late-stint
+degradation effects.
+
+% --- Fuel load effects ---
+\textcite{oldknow2022fuel} analyzed the competitive impact of the 2019 F1 fuel
+load regulations, demonstrating that the 110\,kg fuel limit introduced
+strategic variation---teams operating below the limit on Sundays gained lap
+time at the cost of fuel management risk. Their analysis supports the use of a
+linear fuel burn-off proxy as a reasonable first-order approximation of the
+mass--performance relationship.
+
+% --- Multinomial logistic regression in sports ---
+\textcite{agresti2013} provides the theoretical foundation for multinomial
+logistic regression as a generalization of binary logistic regression to
+nominal response variables with more than two categories. The model estimates
+simultaneous log-odds equations for each non-baseline category, making it
+well-suited for our three-tier classification problem where the ordinal
+structure is not strictly enforced.
+
+\textcite{hosmer2013} established diagnostic procedures for logistic
+regression models, including the use of VIF for multicollinearity detection
+and the importance of interaction terms when theoretically justified. Their
+recommendation to mean-center variables before creating interaction products
+directly informed our feature engineering approach.
+
+% --- Cross-validation strategies ---
+\textcite{varoquaux2019} evaluated cross-validation strategies for grouped
+data and demonstrated that standard $k$-fold CV produces optimistically biased
+performance estimates when observations within groups are correlated. They
+recommended leave-one-group-out CV (LOGO-CV) as the appropriate validation
+strategy for grouped data---precisely the scenario in our study where laps are
+nested within races.
+
+\textcite{wong2023} applied leave-one-group-out cross-validation to sports
+analytics, showing that LOGO-CV provides a more conservative and realistic
+estimate of model generalizability compared to random $k$-fold splits.
+
+% --- Class imbalance ---
+\textcite{he2009learning} surveyed learning from imbalanced datasets and
+identified balanced class weighting as a baseline correction strategy that
+adjusts the loss function to penalize misclassifications of the minority class
+more heavily. This approach was applied in our ML validation to address the
+natural imbalance where ``No Points'' laps dominate the dataset.
+
+\subsection{Local Studies}
+
+% --- Philippine sports analytics ---
+\textcite{dalisay2022} applied logistic regression to predict game outcomes
+in the Philippine Basketball Association (PBA) using box-score statistics.
+Their study, conducted at De La Salle University, demonstrated that
+multinomial classification frameworks can be successfully applied to
+Philippine sports data despite smaller datasets compared to international
+counterparts.
+
+\textcite{reyes2021} developed a predictive model for volleyball match
+outcomes at the University Athletic Association of the Philippines (UAAP)
+using ordinal logistic regression. Their work at the University of the
+Philippines highlighted the importance of interaction terms in capturing
+the combined effect of offensive and defensive efficiency---a methodological
+parallel to our degradation--fuel interaction approach.
+
+\textcite{mendoza2023} examined the use of multivariate statistical methods
+in analyzing student performance data at Ateneo de Manila University, applying
+discriminant analysis and multinomial logistic regression to classify students
+into performance tiers. Their finding that Box's M test should guide the
+choice between discriminant analysis and logistic regression directly informed
+our method selection process.
+
+\textcite{santos2020} conducted a study on feature engineering for
+classification problems in the Philippine context, emphasizing the importance
+of creating interaction terms that represent domain-specific relationships
+rather than relying solely on raw variables.
+
+\subsection{Synthesis}
+
+The reviewed literature establishes several key points that frame this study.
+First, most F1 prediction models operate at the season or race-aggregate
+level and do not exploit within-race telemetry dynamics. Second, tire
+degradation and fuel load are individually recognized as critical race
+variables, but their interaction has not been explicitly modeled as a
+predictor of finishing tier. Third, multinomial logistic regression is the
+appropriate inferential framework when the response is multi-class and the
+covariance homogeneity assumption required by discriminant analysis is not
+met. Fourth, LOGO-CV provides the most honest estimate of generalizability
+for grouped racing data. This study synthesizes these insights by engineering
+a physically meaningful interaction term and validating it through a
+statistically rigorous pipeline.
+
+\subsection{Definition of Terms}
+
+\begin{description}[style=nextline]
+  \item[Box's M Test] A multivariate statistical test that evaluates whether
+    the variance--covariance matrices of two or more groups are equal.
+  \item[Cross-Validation] A model validation technique that partitions data
+    into training and testing subsets to assess generalizability.
+  \item[Degradation $\times$ Fuel Interaction] The mean-centered product of
+    tire age and fuel mass proxy, capturing the combined physical effect of
+    rubber wear and decreasing car mass.
+  \item[DNF (Did Not Finish)] A classification for drivers who retire from a
+    race due to mechanical failure, accident, or other reasons before
+    completing the scheduled distance.
+  \item[FastF1] An open-source Python library for accessing Formula One
+    timing, telemetry, and session data.
+  \item[Finishing Tier] A three-class ordinal variable derived from race
+    classification: Podium (P1--P3), Point Scorer (P4--P10), No Points
+    (P11+).
+  \item[Fuel Mass Proxy] An engineered variable modeling fuel burn-off as a
+    linear decrease from 110\,kg at race start to 0\,kg at race end.
+  \item[Grid Position] A driver's starting position determined by qualifying
+    results; used as a control variable for baseline car--driver pace.
+  \item[Leave-One-Group-Out Cross-Validation (LOGO-CV)] A validation strategy
+    where the model is iteratively trained on $N-1$ groups and tested on the
+    held-out group.
+  \item[Log-Odds] The natural logarithm of the odds ratio, representing the
+    linear predictor in logistic regression.
+  \item[Multinomial Logistic Regression] A generalization of binary logistic
+    regression for response variables with three or more unordered categories.
+  \item[Maximum Likelihood Estimation (MLE)] A method of estimating model
+    parameters by finding values that maximize the probability of observing
+    the given data.
+  \item[Tire Age] The number of laps a tire has been used, measured by the
+    \texttt{TyreLife} field in FastF1 telemetry.
+  \item[Tire Compound] The type of tire rubber (Soft, Medium, Hard) selected
+    for a stint, each offering different performance and durability trade-offs.
+  \item[Variance Inflation Factor (VIF)] A measure of how much the variance of
+    a regression coefficient is inflated due to multicollinearity with other
+    predictors.
+\end{description}
