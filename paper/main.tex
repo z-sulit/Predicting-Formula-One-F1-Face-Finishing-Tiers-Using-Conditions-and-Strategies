@@ -16,6 +16,7 @@
 % ---- Double spacing ----
 \usepackage{setspace}
 \doublespacing
+\setlength{\emergencystretch}{1em}
 
 % ---- Paragraph indentation: 0.5 inch ----
 \setlength{\parindent}{0.5in}
@@ -23,6 +24,7 @@
 
 % ---- Page numbers (top right) ----
 \usepackage{fancyhdr}
+\setlength{\headheight}{15pt}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[R]{\thepage}
@@ -44,6 +46,7 @@
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{multirow}
+\usepackage{tabularx}
 \usepackage{caption}
 \usepackage{float}
 \captionsetup[table]{skip=6pt}
@@ -62,6 +65,7 @@
 
 % ---- References: APA 7th via biblatex ----
 \usepackage[american]{babel}
+\usepackage{csquotes}
 \usepackage[style=apa, backend=biber, natbib=true]{biblatex}
 \addbibresource{references.bib}
 
@@ -71,6 +75,7 @@
 % ---- Misc ----
 \usepackage{enumitem}
 \usepackage{ragged2e}
+\usepackage{listings}
 
 % ============================================================
 \begin{document}
@@ -100,7 +105,7 @@
     \vfill
     {\large April 2026\par}
     \vspace{0.18in}
-    {\small \url{https://github.com/z-sulit/Predicting-Formula-One-F1-Face-Finishing-Tiers-Using-Conditions-and-Strategies}\par}
+    {\small \href{https://github.com/z-sulit/Predicting-Formula-One-F1-Face-Finishing-Tiers-Using-Conditions-and-Strategies}{GitHub repository}\par}
   \end{singlespace}
 \end{titlepage}
 

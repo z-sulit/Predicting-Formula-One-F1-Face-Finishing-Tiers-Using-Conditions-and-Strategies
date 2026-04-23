@@ -13,8 +13,8 @@ observations with the following variables:
   \centering
   \caption{Dataset Variable Summary}
   \label{tab:dataset-summary}
-  \small
-  \begin{tabular}{llr}
+  \footnotesize
+  \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}l>{\raggedright\arraybackslash}l>{\raggedright\arraybackslash}X}
     \toprule
     \textbf{Variable} & \textbf{Type} & \textbf{Values / Range} \\
     \midrule
@@ -29,7 +29,7 @@ observations with the following variables:
     Tire\_MEDIUM       & Binary        & 0 or 1 \\
     Tire\_SOFT         & Binary        & 0 or 1 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \subsection{Appendix B: Class Distribution}
@@ -55,21 +55,21 @@ observations with the following variables:
 
 \small
 \textbf{Box's M Test:}
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small\ttfamily,breaklines=true,breakatwhitespace=false]
        Chi-Sq (approx.)  DF   p-value
 Box's M  160.419         20   < 2.2e-16
-\end{verbatim}
+\end{lstlisting}
 
 \textbf{VIF Output:}
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small\ttfamily,breaklines=true,breakatwhitespace=false]
        GridPosition  Tire_Age  Fuel_Mass_Proxy
 VIF    1.007456      3.219551  2.314596
        Degradation_x_Fuel  Tire_MEDIUM  Tire_SOFT
 VIF    1.724701            1.181336     1.155771
-\end{verbatim}
+\end{lstlisting}
 
 \textbf{Multinomial Logistic Regression Summary:}
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small\ttfamily,breaklines=true,breakatwhitespace=false]
 Call:
 multinom(formula = Finishing_Tier ~ GridPosition + Tire_Age +
     Fuel_Mass_Proxy + Degradation_x_Fuel + Tire_MEDIUM +
@@ -85,17 +85,17 @@ Point Scorer         0.0002182545     -0.4600896  -0.2538360
 
 Residual Deviance: 3821.657
 AIC: 3849.657
-\end{verbatim}
+\end{lstlisting}
 
 \textbf{Exact $p$-Values:}
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small\ttfamily,breaklines=true,breakatwhitespace=false]
                      (Intercept) GridPosition Tire_Age Fuel_Mass_Proxy
 Podium               0.0000      0.0000       0.0328   0.0009
 Point Scorer         0.0000      0.0000       0.6337   0.0003
                     Degradation_x_Fuel Tire_MEDIUM Tire_SOFT
 Podium               0.0095             0.3883      0.3764
 Point Scorer         0.2174             0.0008      0.0540
-\end{verbatim}
+\end{lstlisting}
 \normalsize
 
 \subsection{Appendix D: Python ML Validation Output}

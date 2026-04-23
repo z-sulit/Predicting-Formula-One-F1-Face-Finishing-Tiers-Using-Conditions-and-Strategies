@@ -37,11 +37,11 @@ However, this variable is partially confounded with race progression (lap
 number), making the interaction term a cleaner measure of the tire--fuel
 coupling.
 
-The non-significance of tire compound dummies (Tire\_SOFT, Tire\_MEDIUM for
-Podium) suggests that \textit{which} compound a driver uses matters less than
-\textit{how} the tire degrades over its stint. This supports the theoretical
-position that degradation dynamics---not static compound labels---drive
-performance differentiation.
+The non-significance of the tire-compound dummies (Tire\_SOFT and
+Tire\_MEDIUM for Podium) suggests that \textit{which} compound a driver uses
+matters less than \textit{how} the tire degrades over its stint. This
+supports the theoretical position that degradation dynamics, rather than
+static compound labels, drive performance differentiation.
 
 \subsection{Relating to Literature}
 
@@ -61,10 +61,10 @@ construction---it represents a real force coupling that teams actively manage
 during races.
 
 The LOGO-CV validation approach follows the recommendations of
-\textcite{varoquaux2019} and \textcite{wong2023}, who demonstrated that
+\textcite{varoquaux2019} and \textcite{wong2023}, who showed that
 group-aware validation produces more conservative and realistic performance
-estimates. Our 62.36\% accuracy, while moderate, is an honest estimate that
-accounts for the grouped structure of racing data.
+estimates. Our 62.36\% accuracy is therefore best read as an honest,
+out-of-sample estimate for grouped racing data rather than an inflated score.
 
 The tire degradation findings are consistent with \textcite{baldi2022}, who
 showed that degradation effects are nonlinear. Our linear tire age predictor
@@ -104,9 +104,9 @@ Several limitations should be acknowledged:
 
   \item \textbf{DNF protocol limitation.} Reassigning all DNF laps to ``No
     Points'' removes potentially informative telemetry from drivers who were
-    running competitively before retiring. A more nuanced approach---such as
-    using running position at the time of retirement---could improve model
-    training.
+    still running competitively before retiring. A more nuanced approach,
+    such as using running position at the time of retirement, could improve
+    model training.
 \end{enumerate}
 
 \subsection{Practical Impacts}
