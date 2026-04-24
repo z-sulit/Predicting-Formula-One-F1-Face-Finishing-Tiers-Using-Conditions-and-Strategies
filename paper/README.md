@@ -49,5 +49,5 @@ Read through all chapters for flow and consistency. Check that the Definition of
 ## Group
 
 - Co, Jelliane B.
-- Dampal, Justin G.
-- Sulit, Lorenzo G.
+- Dampal, Justin Louis A.
+- Sulit, Zachary Lorenzo F.

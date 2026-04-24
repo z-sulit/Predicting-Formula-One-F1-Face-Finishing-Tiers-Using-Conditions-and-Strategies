@@ -1,7 +1,7 @@
 # Predicting F1 Race Finishing Tiers Using Telemetry, Race Conditions, and Strategies
 **Multivariate Statistical Analysis**
 
-**Project By:** Jelliane Co, Justin Dampal & Lorenzo Sulit
+**Project By:** Jelliane B. Co, Justin Louis A. Dampal & Zachary Lorenzo F. Sulit
 
 ---
 
