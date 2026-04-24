@@ -33,10 +33,10 @@ Two dependence techniques were considered:
     assumptions that are routinely violated in motorsport data due to the
     skewed nature of track evolution and safety car deployments.
 
-  \item[Multinomial Logistic Regression] The definitive technique selected
-    for this study. Using Maximum Likelihood Estimation (MLE), it calculates
-    the specific log-odds of a driver landing in each tier relative to a
-    baseline category. It offers greater operational value for risk
+  \item[Multinomial Logistic Regression] This was the primary technique
+    selected for the study. Using Maximum Likelihood Estimation (MLE), it
+    calculates the log-odds of a driver landing in each tier relative to a
+    baseline category. It also offers greater operational value for risk
     assessment than MDA's rigid classification boundaries and makes no
     assumption about covariance structure.
 \end{description}
@@ -107,9 +107,8 @@ bypasses this rigid normality requirement.
 Tire degradation and fuel mass burn-off are physically coupled variables:
 both increase monotonically with lap number. Initial VIF diagnostics
 confirmed multicollinearity risk between these variables and their product
-term. Following Hair et al.'s\parencite{hair2019} recommendation, the
-variables were \textit{not} dropped. Instead, a dynamic interaction term
-was constructed:
+term. Following \textcite{hair2019}, the variables were \textit{not}
+dropped. Instead, a dynamic interaction term was constructed:
 
 \[
   \text{Degradation} \times \text{Fuel} =
@@ -127,19 +126,18 @@ threshold of 10.
 
 \subsubsection{Model Estimation}
 
-The Multinomial Logistic Regression was estimated via Maximum Likelihood
+The Multinomial Logistic Regression was estimated with Maximum Likelihood
 Estimation (MLE) using the \texttt{multinom()} function in R's
 \texttt{nnet} package. The model computes simultaneous log-odds equations
 for the Podium and Point Scorer tiers relative to the No Points baseline:
 
 \[
-  \ln\!\left(\frac{P(Y = k)}{P(Y = \text{No Points})}\right) =
-  \beta_{0k} + \beta_{1k} \cdot \text{Grid} +
-  \beta_{2k} \cdot \text{TireAge} +
-  \beta_{3k} \cdot \text{Fuel} +
-  \beta_{4k} \cdot \text{Deg}\times\text{Fuel} +
-  \beta_{5k} \cdot \text{Tire\_MED} +
-  \beta_{6k} \cdot \text{Tire\_SOFT}
+\begin{aligned}
+  \ln\!\left(\frac{P(Y = k)}{P(Y = \text{No Points})}\right)
+  &= \beta_{0k} + \beta_{1k} \cdot \text{Grid} + \beta_{2k} \cdot \text{TireAge} \\
+  &\quad + \beta_{3k} \cdot \text{Fuel} + \beta_{4k} \cdot (\text{Deg} \times \text{Fuel}) \\
+  &\quad + \beta_{5k} \cdot \text{Tire\_MED} + \beta_{6k} \cdot \text{Tire\_SOFT}
+\end{aligned}
 \]
 
 where $k \in \{\text{Podium}, \text{Point Scorer}\}$.
@@ -206,9 +204,9 @@ The analytical pipeline was executed across two environments:
 
 \begin{itemize}
   \item \textbf{Python (pandas, scikit-learn):} Data wrangling, dummy
-    encoding, interaction term generation, and LOGO-CV validation loops.
-    The \texttt{LogisticRegression} class with \texttt{class\_weight=
-    "balanced"} was used for cross-validation.
+    encoding, interaction-term generation, and LOGO-CV validation loops.
+    Cross-validation used scikit-learn logistic regression with balanced
+    class weights.
   \item \textbf{R (\texttt{nnet}, \texttt{car}, \texttt{heplots}):}
     Theoretical proof via \texttt{multinom()} for rigorous coefficient
     summaries, exact $p$-values, Box's M test, and VIF diagnostics.
@@ -281,7 +279,7 @@ study complies with FastF1's terms of use for academic research.
   \item \textbf{Data transparency:} The full dataset and all source code
     (Jupyter notebooks, R scripts, figure generation) are available in the
     project repository for independent verification:
-    \url{https://github.com/z-sulit/Predicting-Formula-One-F1-Face-Finishing-Tiers-Using-Conditions-and-Strategies}
+    \href{https://github.com/z-sulit/Predicting-Formula-One-F1-Face-Finishing-Tiers-Using-Conditions-and-Strategies}{project GitHub repository}
   \item \textbf{Assumption testing before estimation:} Box's M test and VIF
     diagnostics were conducted and reported regardless of outcome, following
     the sequential framework.

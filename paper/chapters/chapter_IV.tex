@@ -64,8 +64,8 @@ pooled covariance.
 \subsection{VIF Diagnostics: Multicollinearity Check}
 
 Variance inflation factors were computed for all predictors to ensure that
-the engineered features---particularly the interaction term and its component
-variables---did not introduce problematic multicollinearity.
+the engineered features, especially the interaction term and its component
+variables, did not introduce problematic multicollinearity.
 
 \begin{table}[htbp]
   \centering
@@ -104,11 +104,10 @@ eliminated structural multicollinearity. Without mean-centering, the product
 of two correlated variables would inherit and amplify their correlation,
 inflating standard errors and destabilizing coefficient estimates.
 
-The near-perfect VIF of 1.007 for GridPosition confirms that starting
-position and within-race telemetry are statistically independent---a finding
-that is physically expected since grid position is determined in qualifying
-(over a single flying lap) while tire age and fuel mass accumulate during
-the race.
+The near-perfect VIF of 1.007 for grid position confirms that starting
+position and within-race telemetry are statistically independent. This is
+physically expected because grid position is determined in qualifying,
+whereas tire age and fuel mass accumulate during the race.
 
 \subsection{Multinomial Logistic Regression (MLE)}
 
@@ -141,8 +140,8 @@ reference tier.
   \centering
   \caption{MLE Coefficient Estimates (Log-Odds)}
   \label{tab:coefficients}
-  \small
-  \begin{tabular}{lrr}
+  \footnotesize
+  \begin{tabularx}{0.88\textwidth}{>{\raggedright\arraybackslash}Xrr}
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
@@ -154,15 +153,15 @@ reference tier.
     Tire\_MEDIUM         &  0.2267  & $-0.4601$ \\
     Tire\_SOFT           &  0.2424  & $-0.2538$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \begin{table}[htbp]
   \centering
   \caption{Standard Errors of Coefficient Estimates}
   \label{tab:std-errors}
-  \small
-  \begin{tabular}{lrr}
+  \footnotesize
+  \begin{tabularx}{0.88\textwidth}{>{\raggedright\arraybackslash}Xrr}
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
@@ -174,15 +173,15 @@ reference tier.
     Tire\_MEDIUM         & 0.2628  & 0.1376 \\
     Tire\_SOFT           & 0.2740  & 0.1317 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \begin{table}[htbp]
   \centering
   \caption{$p$-Values for Coefficient Significance}
   \label{tab:pvalues}
-  \small
-  \begin{tabular}{lrr}
+  \footnotesize
+  \begin{tabularx}{0.88\textwidth}{>{\raggedright\arraybackslash}Xrr}
     \toprule
     \textbf{Predictor} & \textbf{Podium} & \textbf{Point Scorer} \\
     \midrule
@@ -194,7 +193,7 @@ reference tier.
     Tire\_MEDIUM         & 0.3883 & 0.0008 \\
     Tire\_SOFT           & 0.3764 & 0.0540 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \begin{figure}[htbp]
@@ -209,18 +208,18 @@ reference tier.
 Figure~\ref{fig:coefficients} visualizes the coefficient estimates, with
 filled bars indicating statistical significance at $\alpha = 0.05$.
 
-\paragraph{GridPosition ($p = 0.000$ for both tiers).}
+\paragraph{Grid position.}
 Starting position is overwhelmingly significant for both the Podium and Point
-Scorer tiers. The coefficient of $-0.80$ for Podium means that each position
+Scorer tiers ($p = 0.000$ for both). The coefficient of $-0.80$ for Podium means that each position
 further back on the grid reduces the log-odds of a podium finish by
 approximately 0.80 units. In odds-ratio terms, moving back one grid position
 multiplies the odds of a podium finish by $e^{-0.80} \approx 0.45$---a
 55\% reduction per grid slot. This is the dominant predictor in the model and
 confirms the well-known difficulty of overtaking in modern F1.
 
-\paragraph{Degradation $\times$ Fuel ($p = 0.0095$ for Podium).}
+\paragraph{Degradation $\times$ Fuel.}
 With grid position controlling for raw car pace, the interaction term achieves
-significance at $\alpha < 0.01$ for the Podium tier. The positive coefficient
+significance at $\alpha < 0.01$ for the Podium tier ($p = 0.0095$). The positive coefficient
 (0.0008) indicates that when tire age and fuel mass are both high---i.e.,
 early-race conditions where the car is heavy and tires are relatively
 fresh---the combined physical effect favors podium outcomes. This is
@@ -229,16 +228,16 @@ more effectively under heavy fuel loads, maintaining competitive lap times
 while midfield competitors lose performance to the combined stress of mass
 and rubber wear.
 
-\paragraph{Fuel\_Mass\_Proxy ($p = 0.0009$ Podium, $p = 0.0003$ Point Scorer).}
-Fuel mass is significant for both tiers. The negative coefficients mean that
+\paragraph{Fuel\_Mass\_Proxy.}
+Fuel mass is significant for both tiers ($p = 0.0009$ for Podium and $p = 0.0003$ for Point Scorer). The negative coefficients mean that
 as fuel burns off (decreasing mass), the log-odds of being in the Podium or
 Point Scorer tier increase relative to No Points. This reflects the physical
 reality that lighter cars are faster---but since fuel mass decreases
 monotonically with lap number, this variable also partially captures the
 effect of race progression.
 
-\paragraph{Tire\_MEDIUM ($p = 0.0008$ for Point Scorer).}
-Medium tire compound is significant for the Point Scorer tier with a negative
+\paragraph{Tire\_MEDIUM.}
+Medium tire compound is significant for the Point Scorer tier ($p = 0.0008$) with a negative
 coefficient ($-0.46$), indicating that laps on medium tires are associated
 with lower log-odds of being in the Point Scorer tier relative to the Hard
 baseline. This likely reflects strategic patterns: top teams often start on
@@ -278,7 +277,7 @@ captures.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.8\textwidth]{figures/fig6_scatter_tierfuel.pdf}
-  \caption{Tire Age vs.\ Fuel Mass Proxy by Finishing Tier}
+  \caption{Tire Age vs.\ Fuel Mass by Tier}
   \label{fig:scatter}
 \end{figure}
 

@@ -16,6 +16,7 @@
 % ---- Double spacing ----
 \usepackage{setspace}
 \doublespacing
+\setlength{\emergencystretch}{1em}
 
 % ---- Paragraph indentation: 0.5 inch ----
 \setlength{\parindent}{0.5in}
@@ -23,6 +24,7 @@
 
 % ---- Page numbers (top right) ----
 \usepackage{fancyhdr}
+\setlength{\headheight}{15pt}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[R]{\thepage}
@@ -44,6 +46,7 @@
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{multirow}
+\usepackage{tabularx}
 \usepackage{caption}
 \usepackage{float}
 \captionsetup[table]{skip=6pt}
@@ -62,6 +65,7 @@
 
 % ---- References: APA 7th via biblatex ----
 \usepackage[american]{babel}
+\usepackage{csquotes}
 \usepackage[style=apa, backend=biber, natbib=true]{biblatex}
 \addbibresource{references.bib}
 
@@ -71,11 +75,12 @@
 % ---- Misc ----
 \usepackage{enumitem}
 \usepackage{ragged2e}
+\usepackage{listings}
 
 % ============================================================
 \begin{document}
 
-% ---- APA Student Title Page ----
+% ---- Title Page ----
 \begin{titlepage}
   \centering
   \vspace*{1in}
@@ -84,7 +89,7 @@
   \vspace{0.5in}
   {\large Co, Jelliane B.\\
   Dampal, Justin G.\\
-  Sulit, Zachary Lorenzo F.\par}
+  Sulit, Lorenzo G.\par}
   \vspace{0.3in}
   {\large Department of Mathematics and Statistics\\
   Ateneo de Davao University\par}
